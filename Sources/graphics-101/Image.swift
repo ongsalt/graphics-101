@@ -21,6 +21,7 @@ struct Image {
     }
 
     func write(to url: URL) throws {
+        print("[g101] writing")
         _ = try FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
 
@@ -31,8 +32,8 @@ struct Image {
 
         var buffer = ""
         for p in pixels {
-            let (r, g, b, a) = p.toUInt8()
-            buffer += "\(r) \(g) \(b)\n"
+            let (r, g, b, _) = p.toUInt8()
+            buffer += "\(r) \(g) \(b) "
         }
 
         try file.write(contentsOf: buffer.data(using: .ascii)!)
