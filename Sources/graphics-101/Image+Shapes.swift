@@ -5,7 +5,8 @@ typealias PaintFn = (Int, Int, Color) -> Color
 
 nonisolated(unsafe) let PAINT_WHITE: PaintFn = { _, _, _ in .white }
 
-private func isInsideCircle(center: (Float, Float), radius: Float, position: (Float, Float)) -> Bool
+private func isInsideCircle(_ position: (Float, Float), center: (Float, Float), radius: Float)
+    -> Bool
 {
     let (x, y) = position
     let (cx, cy) = center
@@ -14,7 +15,7 @@ private func isInsideCircle(center: (Float, Float), radius: Float, position: (Fl
 }
 
 private func isInsideSuperellipse(
-    center: (Float, Float), radius r: Float, position: (Float, Float), degree: Int = 4
+    _ position: (Float, Float), center: (Float, Float), radius r: Float, degree: Int = 4
 )
     -> Bool
 {
@@ -31,7 +32,7 @@ private func isInsideSuperellipse(
 }
 
 private func isInsideRoundedRectangle(
-    _ position: (Float, Float), rect r: Rect, cornerRadius radius: Float, degree: Int = 4
+    _ position: (Float, Float), rect r: Rect, cornerRadius cr: Float, degree: Int = 4
 )
     -> Bool
 {
@@ -40,27 +41,19 @@ private func isInsideRoundedRectangle(
     // there is 4 corner and 2 overlapping rect h and v
 
     // h
-    if r.left + radius <= x && x <= r.right - radius && r.top <= y && y <= r.bottom {
+    if r.left + cr <= x && x <= r.right - cr && r.top <= y && y <= r.bottom {
         return true
     }
 
     // v
-    if r.left <= x && x <= r.right && r.top + radius <= y && y <= r.bottom - radius {
+    if r.left <= x && x <= r.right && r.top + cr <= y && y <= r.bottom - cr {
         return true
     }
 
-    return isInsideSuperellipse(
-        center: (r.left + radius, r.top + radius), radius: radius,
-        position: (x, y))
-        || isInsideSuperellipse(
-            center: (r.left + radius, r.bottom - radius), radius: radius,
-            position: (x, y))
-        || isInsideSuperellipse(
-            center: (r.right - radius, r.top + radius), radius: radius,
-            position: (x, y))
-        || isInsideSuperellipse(
-            center: (r.right - radius, r.bottom - radius), radius: radius,
-            position: (x, y))
+    return isInsideSuperellipse((x, y), center: (r.left + cr, r.top + cr), radius: cr, )
+        || isInsideSuperellipse((x, y), center: (r.left + cr, r.bottom - cr), radius: cr)
+        || isInsideSuperellipse((x, y), center: (r.right - cr, r.top + cr), radius: cr)
+        || isInsideSuperellipse((x, y), center: (r.right - cr, r.bottom - cr), radius: cr)
 }
 
 extension Image {
@@ -81,7 +74,7 @@ extension Image {
                         let x = Float(x) + (Float(sx) + 0.5) / Float(subpixelCount)
                         let y = Float(y) + (Float(sy) + 0.5) / Float(subpixelCount)
 
-                        if isInsideCircle(center: center, radius: radius, position: (x, y)) {
+                        if isInsideCircle((x, y), center: center, radius: radius) {
                             covered += 1
                         }
                     }
@@ -137,7 +130,8 @@ extension Image {
     }
 
     mutating func fillCircle(
-        center: (Float, Float), radius: Float
+        center: (Float, Float),
+        radius: Float
     ) {
         let (cx, cy) = center
         let x1 = Int(floor(cx - radius))
@@ -146,12 +140,14 @@ extension Image {
         let y2 = Int(ceil(cy + radius))
 
         fillShape(region: (x1, x2, y1, y2)) { x, y in
-            isInsideCircle(center: center, radius: radius, position: (x, y))
+            isInsideCircle((x, y), center: center, radius: radius)
         }
     }
 
     mutating func fillSuperellipse(
-        center: (Float, Float), radius: Float, degree: Int = 4,
+        center: (Float, Float),
+        radius: Float,
+        degree: Int = 4,
         paint: PaintFn = PAINT_WHITE
     ) {
         let (cx, cy) = center
@@ -165,8 +161,7 @@ extension Image {
             region: (x1, x2, y1, y2),
             subpixelCount: 4,
             where: { x, y in
-                isInsideSuperellipse(
-                    center: center, radius: radius, position: (x, y), degree: degree)
+                isInsideSuperellipse((x, y), center: center, radius: radius, degree: degree)
             },
             paint: paint
         )
@@ -185,7 +180,8 @@ extension Image {
     }
 
     mutating func fillRoundedRectangle(
-        rect: Rect, cornerRadius: Float,
+        rect: Rect,
+        cornerRadius: Float,
         paint: PaintFn = PAINT_WHITE
     ) {
         fillShape(
