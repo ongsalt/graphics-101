@@ -12,8 +12,10 @@ struct Color {
 
     func toUInt8() -> (r: UInt8, g: UInt8, b: UInt8, a: UInt8) {
         (
-            r: UInt8(min(r, 1) * 255), g: UInt8(min(g, 1) * 255), b: UInt8(min(b, 1) * 255),
-            a: UInt8(min(a, 1) * 255)
+            r: UInt8(r.clamp(0, 1) * 255),
+            g: UInt8(g.clamp(0, 1) * 255),
+            b: UInt8(b.clamp(0, 1) * 255),
+            a: UInt8(a.clamp(0, 1) * 255)
         )
     }
 
@@ -26,7 +28,7 @@ struct Color {
     }
 
     func mutiply(_ other: Color) -> Color {
-        return Color(
+        Color(
             r: r * other.r,
             g: g * other.g,
             b: b * other.b,
@@ -34,8 +36,12 @@ struct Color {
         )
     }
 
+    func multiply(scalar mutiplier: Float) -> Color {
+        Color(r: mutiplier * r, g: mutiplier * g, b: mutiplier * b, a: a)
+    }
+
     func screen(_ other: Color) -> Color {
-        return Color(
+        Color(
             r: 1 - (1 - r) * (1 - other.r),
             g: 1 - (1 - g) * (1 - other.g),
             b: 1 - (1 - b) * (1 - other.b),
@@ -44,7 +50,7 @@ struct Color {
     }
 
     func overlay(_ other: Color) -> Color {
-        return Color(
+        Color(
             r: r < 0.5 ? 2 * r * other.r : 1 - 2 * (1 - r) * (1 - other.r),
             g: g < 0.5 ? 2 * g * other.g : 1 - 2 * (1 - g) * (1 - other.g),
             b: b < 0.5 ? 2 * b * other.b : 1 - 2 * (1 - b) * (1 - other.b),
@@ -52,4 +58,9 @@ struct Color {
             a: 1
         )
     }
+
+    static func + (lhs: Self, rhs: Self) -> Self {
+        Color(r: lhs.r + rhs.r, g: lhs.g + rhs.g, b: lhs.b + rhs.b, a: max(lhs.a, rhs.a))
+    }
+
 }

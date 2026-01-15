@@ -11,13 +11,63 @@ struct Image {
         pixels = Array(repeating: fillColor ?? .black, count: width * height)
     }
 
-    func getPixelIndex(x: Int, y: Int) -> Int {
-        // print(x, y)
-        x + y * width
+    // func cropped(rect: Rect) -> Image {
+    //     let image = Image(width: Int(rect.width), height: Int(rect.height))
+    //     return image
+    // }
+
+    func cropped(at rect: Rect) -> Image {
+        var newImage = Image(width: Int(rect.width), height: Int(rect.height))
+
+        let x1 = Int(rect.left)
+        let x2 = Int(rect.right)
+        let y1 = Int(rect.top)
+        let y2 = Int(rect.bottom)
+
+        for x in x1..<x2 {
+            for y in y1..<y2 {
+                let color = pixels[getPixelIndex(x: x, y: y)]
+                newImage.pixels[newImage.getPixelIndex(x: x - x1, y: y - y1)] = color
+            }
+        }
+
+        return newImage
     }
 
-    func colorAt(x: Int, y: Int) -> Color {
-        pixels[getPixelIndex(x: x, y: y)]
+    // TODO: float and antialiasing
+    // TODO: opacity and blending
+    mutating func blit(from other: Image, at area: Rect, to targetPosition: (Int, Int)) {
+        let x1 = Int(area.left)
+        let x2 = Int(area.right)
+        let y1 = Int(area.top)
+        let y2 = Int(area.bottom)
+
+        let (tx, ty) = targetPosition
+
+        for x in x1..<x2 {
+            for y in y1..<y2 {
+                let color = other.pixels[other.getPixelIndex(x: x, y: y)]
+                pixels[getPixelIndex(x: x - x1 + tx, y: y - y1 + ty)] = color
+            }
+        }
+    }
+
+    mutating func blit(from other: Image, to: Rect) {
+        blit(
+            from: other, at: Rect(top: 0, left: 0, width: to.width, height: to.height),
+            to: (Int(to.left), Int(to.top)))
+    }
+
+    // TODO: fix edge
+    func getPixelIndex(x: Int, y: Int, fillEdge: Bool = true) -> Int {
+        let x = max(0, min(x, self.width - 1))
+        let y = max(0, min(y, self.height - 1))
+        // print(x, y)
+        return x + y * width
+    }
+
+    func colorAt(x: Int, y: Int, fillEdge: Bool = true) -> Color {
+        pixels[getPixelIndex(x: x, y: y, fillEdge: fillEdge)]
     }
 
     func write(to url: URL) throws {
@@ -38,4 +88,5 @@ struct Image {
         try file.write(contentsOf: buffer.data(using: .ascii)!)
         try file.close()
     }
+
 }
