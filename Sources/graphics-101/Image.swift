@@ -5,13 +5,14 @@ struct Image {
     let width: Int
     let height: Int
 
-    init(width: Int, height: Int) {
+    init(width: Int, height: Int, fill fillColor: Color? = nil) {
         self.width = width
         self.height = height
-        pixels = Array(repeating: .transparent, count: width * height)
+        pixels = Array(repeating: fillColor ?? .black, count: width * height)
     }
 
     func getPixelIndex(x: Int, y: Int) -> Int {
+        // print(x, y)
         x + y * width
     }
 
