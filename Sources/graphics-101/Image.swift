@@ -21,7 +21,6 @@ struct Image {
     }
 
     func write(to url: URL) throws {
-        print("[g101] writing")
         _ = try FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
 
