@@ -10,9 +10,8 @@ struct graphics_101 {
         let clock = ContinuousClock()
         let startTime = clock.now
 
-        print("[g101] Rendering...")
         await withTaskGroup(of: Void.self) { group in
-            for i in (1...1000) {
+            for i in (1...10) {
                 group.addTask {
                     let startTime = clock.now
                     var image = Image(width: 1920, height: 1080, fill: .grey)
