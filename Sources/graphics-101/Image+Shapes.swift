@@ -115,20 +115,22 @@ extension Image {
     }
 
     mutating func fillSuperellipse(
-        center: (Float, Float), radius: Float, degree: Int = 4
+        center: (Float, Float), radius: Float, degree: Int = 4,
+        paint: (Int, Int) -> Color = { _, _ in .white }
     ) {
         let (cx, cy) = center
-        
+
         let x1 = Int(floor(cx - radius))
         let x2 = Int(ceil(cx + radius))
         let y1 = Int(floor(cy - radius))
         let y2 = Int(ceil(cy + radius))
 
-        fillShape(region: (x1, x2, y1, y2)) { x, y in
-            isInsideSuperellipse(center: center, radius: radius, position: (x, y), degree: degree)
-        } paint: { _, _ in
-            .white
-        }
+        fillShape(
+            region: (x1, x2, y1, y2), subpixelCount: 4,
+            where: { x, y in
+                isInsideSuperellipse(
+                    center: center, radius: radius, position: (x, y), degree: degree)
+            }, paint: paint)
     }
 
 }

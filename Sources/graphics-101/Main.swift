@@ -12,19 +12,13 @@ struct graphics_101 {
                 group.addTask {
                     var image = Image(width: 640, height: 640)
 
-                    for x in 0..<image.width {
-                        for y in 0..<image.height {
-                            // buffer.append(contentsOf: [)
-                            image.pixels.append(
-                                Color(
-                                    r: Float(x) / Float(image.width),
-                                    g: Float(y) / Float(image.height),
-                                    b: 0.5,
-                                    a: 1.0))
-                        }
+                    image.fillSuperellipse(center: (320, 320), radius: 200, degree: i * 2) { x, y in
+                        Color(
+                            r: Float(x - 120) / 400,
+                            g: Float(y - 120) / 400,
+                            b: 0.5,
+                            a: 1.0)
                     }
-
-                    image.fillSuperellipse(center: (320, 320), radius: 200, degree: i * 2)
                     try! image.write(to: URL(filePath: "./ppm/\(i).ppm"))
                 }
             }
