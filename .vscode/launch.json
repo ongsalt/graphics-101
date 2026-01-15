@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:graphics-101}",
+            "name": "Debug graphics-101",
+            "target": "graphics-101",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug graphics-101"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:graphics-101}",
+            "name": "Release graphics-101",
+            "target": "graphics-101",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release graphics-101"
+        }
+    ]
+}
