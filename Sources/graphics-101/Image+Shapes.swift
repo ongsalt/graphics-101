@@ -1,5 +1,7 @@
 import Foundation
 
+nonisolated(unsafe) let PAINT_WHITE: (Int, Int) -> Color = { _, _ in .white }
+
 private func isInsideCircle(center: (Float, Float), radius: Float, position: (Float, Float)) -> Bool
 {
     let (x, y) = position
@@ -23,6 +25,32 @@ private func isInsideSuperellipse(
     // squircle: change degree to 4?
 
     return pow((cx - x) / r, Float(degree)) + pow((cy - y) / r, Float(degree)) <= 1
+}
+
+private func isInsideRoundedRectangle(
+    _ position: (Float, Float), rect r: Rect, cornerRadius: Float, degree: Int = 4
+)
+    -> Bool
+{
+    let (x, y) = position
+
+    // there is 4 corner and 2 overlapping rect h and v
+
+    // h
+    if r.left + cornerRadius <= x && x <= r.right - cornerRadius && r.top <= y && y <= r.bottom {
+        return true
+    }
+
+    // v
+    if r.left <= x && x <= r.right && r.top + cornerRadius <= y && y <= r.bottom - cornerRadius {
+        return true
+    }
+
+    // top left
+    return isInsideSuperellipse(center: (r.left + cornerRadius, r.top + cornerRadius), radius: cornerRadius, position: (x, y))
+    || isInsideSuperellipse(center: (r.left + cornerRadius, r.bottom - cornerRadius), radius: cornerRadius, position: (x, y))
+    || isInsideSuperellipse(center: (r.right - cornerRadius, r.top + cornerRadius), radius: cornerRadius, position: (x, y))
+    || isInsideSuperellipse(center: (r.right - cornerRadius, r.bottom - cornerRadius), radius: cornerRadius, position: (x, y))
 }
 
 extension Image {
@@ -66,7 +94,7 @@ extension Image {
         region: (Int, Int, Int, Int),
         subpixelCount: Int = 4,
         where isInside: (Float, Float) -> Bool,
-        paint: (Int, Int) -> Color = { _, _ in .white }
+        paint: (Int, Int) -> Color = PAINT_WHITE
     ) {
         let (x1, x2, y1, y2) = region
 
@@ -116,7 +144,7 @@ extension Image {
 
     mutating func fillSuperellipse(
         center: (Float, Float), radius: Float, degree: Int = 4,
-        paint: (Int, Int) -> Color = { _, _ in .white }
+        paint: (Int, Int) -> Color = PAINT_WHITE
     ) {
         let (cx, cy) = center
 
@@ -130,6 +158,18 @@ extension Image {
             where: { x, y in
                 isInsideSuperellipse(
                     center: center, radius: radius, position: (x, y), degree: degree)
+            }, paint: paint)
+    }
+
+    mutating func fillRoundedRectangle(
+        rect: Rect, cornerRadius: Float,
+        paint: (Int, Int) -> Color = PAINT_WHITE
+    ) {
+        fillShape(
+            region: (Int(rect.left), Int(rect.right), Int(rect.top), Int(rect.bottom)),
+            subpixelCount: 4,
+            where: { x, y in
+                isInsideRoundedRectangle((x, y), rect: rect, cornerRadius: cornerRadius)
             }, paint: paint)
     }
 
