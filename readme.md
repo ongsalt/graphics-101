@@ -1,3 +1,3 @@
 ```bash
-swift run -c release && ffmpeg -i ./out.ppm out.png -y
+swift run && ffmpeg -i ./ppm/%d.ppm ./out/%04d.png -y
 ```
