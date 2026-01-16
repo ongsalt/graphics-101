@@ -61,6 +61,8 @@ nonisolated(unsafe) var listener = wl_registry_listener(
 
 public struct Connection {
     public init() throws(InitWaylandError) {
+        // whatTheFuck()
+        // return
         let waylandDisplay = ProcessInfo.processInfo.environment["WAYLAND_DISPLAY"] ?? "wayland-0"
 
         guard let display = wl_display_connect(waylandDisplay) else {
@@ -73,13 +75,20 @@ public struct Connection {
         wl_display_roundtrip(display)
 
         // print(state.pointee)
-        // print(state)
+        print(state)
 
-        // let w: Int32 = 640
-        // let h: Int32 = 480
-        // let size = w * h * 4 * 2
+        let w: Int32 = 640
+        let h: Int32 = 480
+        let size = w * h * 4 * 2
 
-        let surface = lwl_compositor_create_surface(state.compositor!)
+        // if surface != nil {
+        //     print("Surface created successfully: \(surface!)")
+        // } else {
+        //     print("Failed to create surface.")
+        // }
+
+        // let surface = pls_create_surface(state.compositor!)
+        let surface = wl_compositor_create_surface(state.compositor!)
         print("surface: \(surface)")
         // // sleep(1)
 
@@ -101,16 +110,12 @@ func listenerCallback(
     data?.withMemoryRebound(to: State.self, capacity: 1) { ptr in
         switch interface {
         case String(utf8String: wl_compositor_interface.name)!:
-            withUnsafePointer(to: wl_compositor_interface) { interface in
-                ptr.pointee.compositor = OpaquePointer(
-                    wl_registry_bind(registry, name, interface, 4))
-            }
+            ptr.pointee.compositor = OpaquePointer(
+                wl_registry_bind(registry, name, get_wl_compositor_interface(), 4))
 
         case String(utf8String: wl_shm_interface.name)!:
-            withUnsafePointer(to: wl_shm_interface) { interface in
-                ptr.pointee.sharedMemoryBuffer = OpaquePointer(
-                    wl_registry_bind(registry, name, interface, 1))
-            }
+            ptr.pointee.sharedMemoryBuffer = OpaquePointer(
+                wl_registry_bind(registry, name, get_wl_shm_interface(), 1))
 
         default:
             return

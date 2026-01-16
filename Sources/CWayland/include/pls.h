@@ -1,7 +1,7 @@
 #ifndef I_DONT_WANNA_WRITE_A_CODE_GENERATOR_H
 #define I_DONT_WANNA_WRITE_A_CODE_GENERATOR_H
 
-#include <wayland-client-protocol.h>
+#include "wayland-client-protocol.h"
 
 struct wl_registry *lwl_display_get_registry(struct wl_display *wl_display);
 

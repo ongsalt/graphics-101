@@ -11,8 +11,10 @@ wayland-scanner private-code < /usr/share/wayland-protocols/stable/xdg-shell/xdg
 
 wayland-scanner client-header < /usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml > xdg-shell-client-protocol.h
 
-wayland-scanner client-header < /usr/share/wayland/wayland.xml > wayland-client-protocol-public.h
+wayland-scanner client-header < /usr/share/wayland/wayland.xml > wayland-client-protocol.h
 
-# Unused
-cc -o xdg-shell-protocol.c -lwayland-client -lrt
+# This is ass, im gonna proper codegen later
+sed -i 's/static inline//g' wayland-client-protocol.h
 ```
+
+then pls remove every `static inline`
