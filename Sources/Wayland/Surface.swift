@@ -3,11 +3,11 @@ import CWayland
 struct Surface {
     let surface: OpaquePointer
 
-    init() {
-        surface = OpaquePointer(UnsafeRawPointer(bitPattern: 1)!)
+    init(compositor: OpaquePointer) {
+        surface = wl_compositor_create_surface(compositor)
     }
 
-    func attach(buffer: Buffer, x: Int32, y: Int32) {
+    func attach(buffer: Buffer, x: Int32 = 0, y: Int32 = 0) {
         wl_surface_attach(surface, buffer.buffer, x, y);
     }
 
@@ -19,7 +19,7 @@ struct Surface {
         wl_surface_damage(surface, x, y, width, height);
     }
 
-    func commit(buffer: Buffer, x: Int32, y: Int32) {
+    func commit() {
         wl_surface_commit(surface)
     }
 }

@@ -77,22 +77,42 @@ public struct Display {
         wl_registry_add_listener(registry, &listener, &state)
         wl_display_roundtrip(display)
 
-        // print(state.pointee)
-
         let w: Int32 = 640
         let h: Int32 = 480
-        let size = w * h * 4 * 2
+        let size = w * h * 4 * 4
 
         // let surface = pls_create_surface(state.compositor!)
-        let surface = wl_compositor_create_surface(state.compositor!)
+        let surface = Surface(compositor: state.compositor)
         // // sleep(1)
 
-        let shm = SharedMemoryBuffer(shm: self.state.sharedMemoryBuffer, size: UInt(size))
-        let pool = shm.createPool()
-        let buffer = pool.createBuffer(
-            offset: 0, width: w, height: h, stride: 4, format: WL_SHM_FORMAT_XRGB8888)
+        let xdgSurface = XDGSurface(xdgWmBase: state.xdgWmBase, surface: surface) {
+            [sharedMemoryBuffer = state.sharedMemoryBuffer!] in
+            let shm = SharedMemoryBuffer(shm: sharedMemoryBuffer, size: UInt(size))
+            let pool = shm.createPool()
 
+            let buffer = pool.createBuffer(
+                offset: 0, width: w, height: h, stride: 4 * w, format: WL_SHM_FORMAT_XRGB8888)
+
+            // rendering
+
+            surface.attach(buffer: buffer)
+            surface.damage()
+            surface.commit()
+        }
+        var xdgTopLevel = XDGTopLevel(surface: xdgSurface)
+        xdgTopLevel.title = "Asd"
+
+        surface.commit()
+
+        while wl_display_dispatch(display) != 0 {
+
+        }
     }
+}
+
+nonisolated(unsafe) private var pongListener = xdg_wm_base_listener { data, xdgWmBase, serial in
+    print("ping")
+    xdg_wm_base_pong(xdgWmBase, serial)
 }
 
 func listenerCallback(
@@ -115,6 +135,12 @@ func listenerCallback(
         case String(utf8String: WaylandInterfaces.xdgWmBase.pointee.name)!:
             ptr.pointee.xdgWmBase = OpaquePointer(
                 wl_registry_bind(registry, name, WaylandInterfaces.xdgWmBase, 1))
+
+            xdg_wm_base_add_listener(
+                ptr.pointee.xdgWmBase,
+                &pongListener,
+                nil
+            )
 
         default:
             // print("interface: \(name) \(interface)")
