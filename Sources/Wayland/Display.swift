@@ -49,6 +49,7 @@ func wtf() throws(InitWaylandError) -> Int32 {
 public struct State {
     var compositor: OpaquePointer!
     var sharedMemoryBuffer: OpaquePointer!
+    var xdgWmBase: OpaquePointer!
 }
 
 nonisolated(unsafe) var listener = wl_registry_listener(
@@ -58,7 +59,7 @@ nonisolated(unsafe) var listener = wl_registry_listener(
     }
 )
 
-public struct Connection {
+public struct Display {
     var state: State
 
     public init() throws(InitWaylandError) {
@@ -103,17 +104,21 @@ func listenerCallback(
 
     data?.withMemoryRebound(to: State.self, capacity: 1) { ptr in
         switch interface {
-        case String(utf8String: wl_compositor_interface.name)!:
+        case String(utf8String: WaylandInterfaces.compositor.pointee.name)!:
             ptr.pointee.compositor = OpaquePointer(
-                wl_registry_bind(registry, name, get_wl_compositor_interface(), 4))
+                wl_registry_bind(registry, name, WaylandInterfaces.compositor, 4))
 
-        case String(utf8String: wl_shm_interface.name)!:
+        case String(utf8String: WaylandInterfaces.shm.pointee.name)!:
             ptr.pointee.sharedMemoryBuffer = OpaquePointer(
-                wl_registry_bind(registry, name, get_wl_shm_interface(), 1))
+                wl_registry_bind(registry, name, WaylandInterfaces.shm, 1))
+
+        case String(utf8String: WaylandInterfaces.xdgWmBase.pointee.name)!:
+            ptr.pointee.xdgWmBase = OpaquePointer(
+                wl_registry_bind(registry, name, WaylandInterfaces.xdgWmBase, 1))
 
         default:
+            // print("interface: \(name) \(interface)")
             return
-        // print("interface: \(name) \(interface)")
         }
     }
 

@@ -64,20 +64,25 @@ func shi() async throws {
     print("[g101] Done in \(clock.now - startTime)")
 }
 
-
-
 @main
 struct graphics_101 {
     static func main() throws {
-        let connection = try Connection()
+        let display = try Display()
 
-        
+        DispatchQueue.global().async {
+            // epoll here then
+            // MainActor.run { }
+        }
+
+        print("next")
         // Task {
         //     try await Task.sleep(for: .seconds(1))
-        //     print("sdsfds")            
+        //     print("sdsfds")
         // }
 
         // how do i interface with wayland shit tho
-        print(connection)
+        let port = SocketPort()
+
+        RunLoop.main.run()
     }
 }

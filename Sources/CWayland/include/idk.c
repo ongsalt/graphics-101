@@ -1,24 +1,11 @@
 #include <stdio.h>
 #include <wayland-client-protocol.h>
 #include <wayland-client-core.h>
-
-const struct wl_interface *get_wl_surface_interface() {
-    return &wl_surface_interface;
-}
-
-const struct wl_interface *get_wl_shm_interface() {
-    return &wl_shm_interface;
-}
-
-const struct wl_interface *get_wl_compositor_interface() {
-    return &wl_compositor_interface;
-}
+#include "xdg-shell-client-protocol.h"
 
 void *pls_create_surface(struct wl_compositor *wl_compositor) {
     return wl_compositor_create_surface(wl_compositor);
 }
-
-
 
 
 #define _POSIX_C_SOURCE 200112L
