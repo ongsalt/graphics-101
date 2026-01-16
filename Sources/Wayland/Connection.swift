@@ -61,29 +61,39 @@ public struct Connection {
             throw .cannotConnect
         }
 
-        let state = UnsafeMutablePointer<State>.allocate(capacity: 1)
+        let registry = wl_display_get_registry(display)!
 
-        let registry = wl_display_get_registry(display)
+        // this must be valid until connection is dropped
+        let state = Pin(State())
+        state.immortalize()
+
+        // too
         let listener = Pin(wl_registry_listener())
         listener.immortalize()
+        listener.pointee.global = { _, _, name, _, _ in
+            print("global: \(name)")
+        }
         listener.pointee.global = listenerCallback
-        listener.pointee.global_remove = { _, _, _ in 
+        listener.pointee.global_remove = { _, _, _ in
             print("removed")
         }
 
-        wl_registry_add_listener(registry, listener.ptr, state)
+        wl_registry_add_listener(registry, listener.ptr, UnsafeMutableRawPointer(state.ptr))
         wl_display_roundtrip(display)
 
-        self.state = state.move()
-        print(self.state)
+        // print(state.pointee)
+        self.state = state.pointee
+        // print(self.state)
 
-        let w: Int32 = 640
-        let h: Int32 = 480
-        let size = w * h * 4 * 2
+        // let w: Int32 = 640
+        // let h: Int32 = 480
+        // let size = w * h * 4 * 2
 
-        let surface = wl_compositor_create_surface(self.state.compositor!)!
+        let surface = wl_compositor_create_surface(self.state.compositor!)
+        print("surface: \(surface)")
+        // // sleep(1)
 
-        let shm = SharedMemoryBuffer(shm: self.state.sharedMemoryBuffer, size: UInt(size))
+        // let shm = SharedMemoryBuffer(shm: self.state.sharedMemoryBuffer, size: UInt(size))
         // let pool = shm.createPool()
         // let buffer = pool.createBuffer(
         //     offset: 0, width: w, height: h, stride: 4, format: WL_SHM_FORMAT_XRGB8888)
@@ -95,6 +105,7 @@ func listenerCallback(
     _ data: UnsafeMutableRawPointer?, _ registry: OpaquePointer?, _ name: UInt32,
     _ interface: UnsafePointer<CChar>?, _ version: UInt32
 ) {
+    print("global(listenerCallback): \(name)")
     let interface = String(utf8String: interface!)!
 
     data?.withMemoryRebound(to: State.self, capacity: 1) { ptr in
@@ -113,7 +124,7 @@ func listenerCallback(
 
         default:
             return
-            // print("interface: \(name) \(interface)")
+        // print("interface: \(name) \(interface)")
         }
     }
 

@@ -17,7 +17,7 @@ class Pin<T> {
 
     // lmao
     func immortalize() {
-        Unmanaged.passRetained(self).retain()
+        Unmanaged.passRetained(self).retain().retain()
     }
 
     deinit {

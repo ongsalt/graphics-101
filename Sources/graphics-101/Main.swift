@@ -70,6 +70,7 @@ func shi() async throws {
 struct graphics_101 {
     static func main() throws {
         let connection = try Connection()
+
         
         // Task {
         //     try await Task.sleep(for: .seconds(1))
@@ -77,6 +78,6 @@ struct graphics_101 {
         // }
 
         // how do i interface with wayland shit tho
-        RunLoop.main.run()
+        print(connection)
     }
 }

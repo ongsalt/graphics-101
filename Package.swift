@@ -16,9 +16,7 @@ let package = Package(
         .executableTarget(
             name: "graphics-101",
             dependencies: ["Wayland"],
-            swiftSettings: [
-                .enableExperimentalFeature("")
-            ]
+            swiftSettings: []
         ),
     ]
 )
