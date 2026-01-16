@@ -51,9 +51,15 @@ public struct State {
     var sharedMemoryBuffer: OpaquePointer!
 }
 
-public struct Connection {
-    let state: State
+nonisolated(unsafe) var state: State = State()
+nonisolated(unsafe) var listener = wl_registry_listener(
+    global: listenerCallback,
+    global_remove: { _, _, _ in
+        print("removed")
+    }
+)
 
+public struct Connection {
     public init() throws(InitWaylandError) {
         let waylandDisplay = ProcessInfo.processInfo.environment["WAYLAND_DISPLAY"] ?? "wayland-0"
 
@@ -61,35 +67,19 @@ public struct Connection {
             throw .cannotConnect
         }
 
-        let registry = wl_display_get_registry(display)!
+        let registry = lwl_display_get_registry(display)!
 
-        // this must be valid until connection is dropped
-        let state = Pin(State())
-        state.immortalize()
-
-        // too
-        let listener = Pin(wl_registry_listener())
-        listener.immortalize()
-        listener.pointee.global = { _, _, name, _, _ in
-            print("global: \(name)")
-        }
-        listener.pointee.global = listenerCallback
-        listener.pointee.global_remove = { _, _, _ in
-            print("removed")
-        }
-
-        wl_registry_add_listener(registry, listener.ptr, UnsafeMutableRawPointer(state.ptr))
+        lwl_registry_add_listener(registry, &listener, &state)
         wl_display_roundtrip(display)
 
         // print(state.pointee)
-        self.state = state.pointee
-        // print(self.state)
+        // print(state)
 
         // let w: Int32 = 640
         // let h: Int32 = 480
         // let size = w * h * 4 * 2
 
-        let surface = wl_compositor_create_surface(self.state.compositor!)
+        let surface = lwl_compositor_create_surface(state.compositor!)
         print("surface: \(surface)")
         // // sleep(1)
 
