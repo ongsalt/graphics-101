@@ -17,6 +17,11 @@ class Pin<T> {
 
     // lmao
     func immortalize() {
-        Unmanaged.passRetained(self).retain().retain().retain().retain()
+        Unmanaged.passRetained(self).retain()
+    }
+
+    deinit {
+        print("[Pin] wrapper for \(T.self) \(pointee) dropped")
+        // ptr.deallocate()
     }
 }

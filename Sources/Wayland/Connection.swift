@@ -65,7 +65,11 @@ public struct Connection {
 
         let registry = wl_display_get_registry(display)
         let listener = Pin(wl_registry_listener())
+        listener.immortalize()
         listener.pointee.global = listenerCallback
+        listener.pointee.global_remove = { _, _, _ in 
+            print("removed")
+        }
 
         wl_registry_add_listener(registry, listener.ptr, state)
         wl_display_roundtrip(display)
@@ -77,12 +81,12 @@ public struct Connection {
         let h: Int32 = 480
         let size = w * h * 4 * 2
 
-        let surface = wl_compositor_create_surface(self.state.compositor)!
+        let surface = wl_compositor_create_surface(self.state.compositor!)!
 
         let shm = SharedMemoryBuffer(shm: self.state.sharedMemoryBuffer, size: UInt(size))
-        let pool = shm.createPool()
-        let buffer = pool.createBuffer(
-            offset: 0, width: w, height: h, stride: 4, format: WL_SHM_FORMAT_XRGB8888)
+        // let pool = shm.createPool()
+        // let buffer = pool.createBuffer(
+        //     offset: 0, width: w, height: h, stride: 4, format: WL_SHM_FORMAT_XRGB8888)
 
     }
 }

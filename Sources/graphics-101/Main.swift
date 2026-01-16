@@ -77,6 +77,6 @@ struct graphics_101 {
         // }
 
         // how do i interface with wayland shit tho
-        // RunLoop.main.run()
+        RunLoop.main.run()
     }
 }
