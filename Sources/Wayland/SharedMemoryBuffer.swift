@@ -16,7 +16,7 @@ struct SharedMemoryBuffer {
         fd = shm_open(name, O_RDWR | O_CREAT | O_EXCL, 0600)
         shm_unlink(name)
 
-        print("fd: \(fd)")
+        // print("fd: \(fd)")
 
         var ret: Int32 = 0
         repeat {

@@ -51,7 +51,6 @@ public struct State {
     var sharedMemoryBuffer: OpaquePointer!
 }
 
-nonisolated(unsafe) var state: State = State()
 nonisolated(unsafe) var listener = wl_registry_listener(
     global: listenerCallback,
     global_remove: { _, _, _ in
@@ -60,8 +59,11 @@ nonisolated(unsafe) var listener = wl_registry_listener(
 )
 
 public struct Connection {
+    var state: State
+
     public init() throws(InitWaylandError) {
-        // whatTheFuck()
+        self.state = State()
+
         // return
         let waylandDisplay = ProcessInfo.processInfo.environment["WAYLAND_DISPLAY"] ?? "wayland-0"
 
@@ -69,33 +71,25 @@ public struct Connection {
             throw .cannotConnect
         }
 
-        let registry = lwl_display_get_registry(display)!
+        let registry = wl_display_get_registry(display)!
 
-        lwl_registry_add_listener(registry, &listener, &state)
+        wl_registry_add_listener(registry, &listener, &state)
         wl_display_roundtrip(display)
 
         // print(state.pointee)
-        print(state)
 
         let w: Int32 = 640
         let h: Int32 = 480
         let size = w * h * 4 * 2
 
-        // if surface != nil {
-        //     print("Surface created successfully: \(surface!)")
-        // } else {
-        //     print("Failed to create surface.")
-        // }
-
         // let surface = pls_create_surface(state.compositor!)
         let surface = wl_compositor_create_surface(state.compositor!)
-        print("surface: \(surface)")
         // // sleep(1)
 
-        // let shm = SharedMemoryBuffer(shm: self.state.sharedMemoryBuffer, size: UInt(size))
-        // let pool = shm.createPool()
-        // let buffer = pool.createBuffer(
-        //     offset: 0, width: w, height: h, stride: 4, format: WL_SHM_FORMAT_XRGB8888)
+        let shm = SharedMemoryBuffer(shm: self.state.sharedMemoryBuffer, size: UInt(size))
+        let pool = shm.createPool()
+        let buffer = pool.createBuffer(
+            offset: 0, width: w, height: h, stride: 4, format: WL_SHM_FORMAT_XRGB8888)
 
     }
 }
@@ -104,7 +98,7 @@ func listenerCallback(
     _ data: UnsafeMutableRawPointer?, _ registry: OpaquePointer?, _ name: UInt32,
     _ interface: UnsafePointer<CChar>?, _ version: UInt32
 ) {
-    print("global(listenerCallback): \(name)")
+    // print("global(listenerCallback): \(name)")
     let interface = String(utf8String: interface!)!
 
     data?.withMemoryRebound(to: State.self, capacity: 1) { ptr in
