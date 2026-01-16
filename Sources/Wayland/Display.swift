@@ -111,7 +111,8 @@ public struct Display {
 }
 
 nonisolated(unsafe) private var pongListener = xdg_wm_base_listener { data, xdgWmBase, serial in
-    print("ping")
+    // wtf, it crash if i uncomment this 
+    // print("ping")
     xdg_wm_base_pong(xdgWmBase, serial)
 }
 

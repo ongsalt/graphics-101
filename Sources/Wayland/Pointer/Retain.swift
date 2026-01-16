@@ -8,8 +8,6 @@ struct Retained<T: AnyObject> {
     static func run<S>(fromPointer: UnsafeMutableRawPointer, _ block: (T) -> S) -> S {
         fromPointer.withMemoryRebound(to: Self.self, capacity: 1) { pointer in
             let this: Retained<T> = pointer.move()
-            pointer.deallocate()
-
             return block(this.instance.takeRetainedValue())
         }
     }
