@@ -79,40 +79,63 @@ struct graphics_101 {
         let surface = Surface(compositor: registry.compositor)
         // // sleep(1)
 
-        let xdgSurface = XDGSurface(xdgWmBase: registry.xdgWmBase, surface: surface) {
-            [sharedMemoryBuffer = registry.sharedMemoryBuffer!] in
-            // this api is shit, TODO: fix it
-            let shm = SharedMemoryBuffer(shm: sharedMemoryBuffer, size: UInt(size))
-            let pool = shm.createPool()
+        let xdgSurface = XDGSurface(
+            xdgWmBase: registry.xdgWmBase,
+            surface: surface,
+            configure: {
+                [sharedMemoryBuffer = registry.sharedMemoryBuffer!] in
+                // this api is shit, TODO: fix it
+                let shm = SharedMemoryBuffer(shm: sharedMemoryBuffer, size: UInt(size))
+                let pool = shm.createPool()
 
-            let buffer = pool.createBuffer(
-                offset: 0, width: w, height: h, stride: 4 * w)
+                let buffer = pool.createBuffer(
+                    offset: 0, width: w, height: h, stride: 4 * w)
 
-            // rendering
+                // rendering
 
-            surface.attach(buffer: buffer)
-            surface.damage()
-            surface.commit()
-        }
+                surface.attach(buffer: buffer)
+                surface.damage()
+                surface.commit()
+            }
+        )
 
         var xdgTopLevel = XDGTopLevel(surface: xdgSurface)
         xdgTopLevel.title = "Asd"
 
         surface.commit()
-        _ = display.dispatch()
+        let n = display.roundtrip()
+        print("roundtrip \(n)")
+
+        // let handle = display.handle
+        // let source = DispatchSource.makeReadSource(fileDescriptor: handle.fileDescriptor)
+
+        // handle.waitForDataInBackgroundAndNotify()
+        // let observer = NotificationCenter.default.addObserver(
+        //     forName: .NSFileHandleDataAvailable, object: handle, queue: .main
+        // ) { notification in
+        //     print("what \(notification.object!)")
+        //     let n = display.dispatch()
+        //     print("processed \(n) events")
+        //     // handle.waitForDataInBackgroundAndNotify()
+        // }
 
         let poller = display.initPolling()
-        // RunLoop actually use epoll too. but its pain to use that handle for something else.
-        // its pretty much legacy/private api
 
-        // Task(executorPreference: globalConcurrentExecutor) {
-
-        // }
         DispatchQueue.global(qos: .userInteractive).async {
+            // let a = DispatchSource.makeReadSource(fileDescriptor: 1)
             while !Task.isCancelled {
+                guard display.prepareRead() == 0 else {
+                    // display.dispatchPending()
+                    fatalError("This should be thread safe")
+                }
+                display.flush()
+
                 poller.wait()
-                let n = display.dispatch()
-                print("processed \(n) events")
+                display.readEvent()
+                DispatchQueue.main.sync {
+                    let n = display.dispatchPending()
+                    // print("processed \(n) events")
+                }
             }
         }
 
@@ -125,34 +148,6 @@ struct graphics_101 {
             }
         }
 
-        // while display.dispatch() != -1 {
-        //     // RunLoop.current.limitDate(forMode: .default)
-        // }
-
-        // print("Done")
-
-        // how do i interface with wayland shit tho
-
-        // https://github.com/swiftlang/swift-corelibs-foundation/blob/8e01f9a71bf0138f0049671a6312dc59ceae371f/Sources/Foundation/RunLoop.swift#L83
-
-        // let port = Port()
-
-        // let _cfRunLoopStorage = Mirror(reflecting: RunLoop.main, ).children.first {
-        //     $0.label == "_cfRunLoopStorage"
-        // }!.value
-        // let rl = unsafeBitCast(_cfRunLoopStorage, to: CFRunLoop?.self)!
-
-        // // rl.
-        // // CFRunLoopAddSource(rl, CFRunLoopSource!, )
-        // // RunLoop.main._add(source, forMode: .common)
-        // var context = CFRunLoopSourceContext()
-
-        // let allocator = CFAllocatorGetDefault()!
-        // let source = CFRunLoopSourceCreate(allocator.takeRetainedValue(), 0, &context)!
-        // allocator.release()
-
-        // RunLoop.main.add(port, forMode: .default)
-        // RunLoop.main.add(Port, forMode: RunLoop.Mode)
         RunLoop.main.run()
     }
 }

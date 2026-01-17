@@ -80,31 +80,85 @@ public struct Display: @unchecked Sendable {
         let registry = wl_display_get_registry(display)!
 
         wl_registry_add_listener(registry, &listener, &self.registry)
-        wl_display_roundtrip(display)
+        _ = roundtrip()
     }
 
+    @discardableResult
     public func dispatch() -> Int32 {
         wl_display_dispatch(display)
     }
+    @discardableResult
+    public func dispatchPending() -> Int32 {
+        wl_display_dispatch_pending(display)
+    }
 
+    @discardableResult
+    public func flush() -> Int32 {
+        wl_display_flush(display)
+    }
+
+    @discardableResult
+    public func prepareRead() -> Int32 {
+        wl_display_prepare_read(display)
+    }
+    
+    @discardableResult
+    public func readEvent() -> Int32 {
+        wl_display_read_events(display)
+    }
+
+    @discardableResult
+    public func roundtrip() -> Int32 {
+        wl_display_roundtrip(display)
+    }
+
+    @discardableResult
     public func initPolling() -> EventPoller {
         EventPoller(displayFd: fd)
     }
+
+    public var handle: FileHandle {
+        FileHandle(fileDescriptor: fd)
+    }
 }
 
-public struct EventPoller: Sendable, ~Copyable {
+public final class EventPoller: Sendable {
     let fd: Int32
 
     init(displayFd: Int32) {
         self.fd = epoll_create1(0)
 
-        var ev = epoll_event(events: EPOLLIN.rawValue | EPOLLET.rawValue, data: .init(fd: displayFd))
+        var ev = epoll_event(
+            events: EPOLLIN.rawValue | EPOLLET.rawValue, data: .init(fd: displayFd))
         epoll_ctl(fd, EPOLL_CTL_ADD, displayFd, &ev)
     }
 
     public func wait() {
         var events: [epoll_event] = []
-        epoll_wait(fd, &events, 0, -1)
+        epoll_wait(fd, &events, 1, -1)
+    }
+
+    public func addListener(_ block: @Sendable @escaping () -> Void) {
+        @Sendable
+        func inner() {
+            DispatchQueue.global(qos: .userInitiated).async {
+
+                while !Task.isCancelled {
+                    self.wait()
+                    // how to switch back to main thread
+                    block()
+                }
+
+                // self.wait()
+                // // switch back to main thread ??
+                // DispatchQueue.main.async(qos: .userInteractive) {
+                //     block()
+                //     inner()
+                // }
+            }
+        }
+
+        inner()
     }
 
     public consuming func destroy() {
