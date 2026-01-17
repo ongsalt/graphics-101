@@ -2,7 +2,7 @@ import CWayland
 import Glibc
 
 // we shuold actually do codegen
-public struct XDGTopLevel {
+public class XDGTopLevel {
     let topLevel: OpaquePointer
 
     public init(surface: XDGSurface, title: String = "") {

@@ -1,5 +1,6 @@
 import CoreFoundation
 import Foundation
+import FoundationNetworking
 import Wayland
 
 func shi() async throws {
@@ -67,6 +68,7 @@ func shi() async throws {
 
 @main
 struct graphics_101 {
+    @MainActor
     static func main() throws {
         let display = try Display()
         let registry = display.registry
@@ -101,28 +103,8 @@ struct graphics_101 {
         xdgTopLevel.title = "Asd"
 
         surface.commit()
-        let n = display.roundtrip()
-        print("roundtrip \(n)")
-
-        let poller = display.initPolling()
-
-        DispatchQueue.global(qos: .userInteractive).async {
-            // let a = DispatchSource.makeReadSource(fileDescriptor: 1)
-            while !Task.isCancelled {
-                guard display.prepareRead() == 0 else {
-                    // display.dispatchPending()
-                    fatalError("This should be thread safe")
-                }
-                display.flush()
-
-                poller.wait()
-                display.readEvent()
-                DispatchQueue.main.sync {
-                    let n = display.dispatchPending()
-                    print("processed \(n) events")
-                }
-            }
-        }
+        display.roundtrip()
+        display.dispatch()
 
         Task {
             var i = 0
@@ -132,6 +114,25 @@ struct graphics_101 {
                 try await Task.sleep(for: .seconds(1))
             }
         }
+
+        let t = Task {
+            let (data, response) = try await URLSession.shared.data(
+
+                from: URL(string: "https://jsonplaceholder.typicode.com/users/1")!)
+            guard let httpResponse = response as? HTTPURLResponse,
+                httpResponse.statusCode == 200
+            else {
+                throw URLError(.badServerResponse)
+            }
+
+            print(data)
+        }
+
+        // non blocking
+
+        // print(ProcessInfo.processInfo.processIdentifier)
+        // let p = DispatchQueue(label: "wayland-poller")
+        // display.monitorEvents(on: p)
 
         RunLoop.main.run()
     }

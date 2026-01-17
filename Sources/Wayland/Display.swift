@@ -59,7 +59,7 @@ nonisolated(unsafe) var listener = wl_registry_listener(
     }
 )
 
-public struct Display: @unchecked Sendable {
+public class Display: @unchecked Sendable {
     public private(set) var registry: Registry
     let display: OpaquePointer
     let fd: Int32
@@ -83,6 +83,49 @@ public struct Display: @unchecked Sendable {
         _ = roundtrip()
     }
 
+    public func monitorEvents(
+        runloop: RunLoop,
+    ) {
+
+    }
+
+    public func monitorEvents(
+        on queue: DispatchQueue,
+    ) {
+        queue.async {
+            while !Task.isCancelled {
+                let n = self.dispatch()
+                print("processed \(n) events")
+            }
+        }
+    }
+
+    // this is ass
+    public func monitorEvents(
+        on listenQueue: DispatchQueue = .global(qos: .default),
+        dispatchOn runQueue: DispatchQueue,
+    ) {
+        let poller = initPolling()
+
+        listenQueue.async {
+            // let a = DispatchSource.makeReadSource(fileDescriptor: 1)
+            while !Task.isCancelled {
+                while self.prepareRead() != 0 {
+                    _ = runQueue.sync { self.dispatchPending() }
+                }
+                self.flush()
+
+                poller.wait()
+
+                self.readEvent()
+                runQueue.async {
+                    let n = self.dispatchPending()
+                    // print("processed \(n) events")
+                }
+            }
+        }
+    }
+
     @discardableResult
     public func dispatch() -> Int32 {
         wl_display_dispatch(display)
@@ -101,7 +144,7 @@ public struct Display: @unchecked Sendable {
     public func prepareRead() -> Int32 {
         wl_display_prepare_read(display)
     }
-    
+
     @discardableResult
     public func readEvent() -> Int32 {
         wl_display_read_events(display)
@@ -136,29 +179,6 @@ public final class EventPoller: Sendable {
     public func wait() {
         var events: [epoll_event] = []
         epoll_wait(fd, &events, 1, -1)
-    }
-
-    public func addListener(_ block: @Sendable @escaping () -> Void) {
-        @Sendable
-        func inner() {
-            DispatchQueue.global(qos: .userInitiated).async {
-
-                while !Task.isCancelled {
-                    self.wait()
-                    // how to switch back to main thread
-                    block()
-                }
-
-                // self.wait()
-                // // switch back to main thread ??
-                // DispatchQueue.main.async(qos: .userInteractive) {
-                //     block()
-                //     inner()
-                // }
-            }
-        }
-
-        inner()
     }
 
     public consuming func destroy() {
