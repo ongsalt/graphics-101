@@ -1,7 +1,8 @@
-import CoreFoundation
 import Foundation
 import FoundationNetworking
 import Wayland
+import Glibc
+
 
 func shi() async throws {
     try FileManager.default.createDirectory(
@@ -70,41 +71,9 @@ func shi() async throws {
 struct graphics_101 {
     @MainActor
     static func main() throws {
-        let display = try Display()
-        let registry = display.registry
+        let window = try Window()
+        // window.pool
 
-        let w: Int32 = 640
-        let h: Int32 = 480
-        let size = w * h * 4 * 4
-
-        let surface = Surface(compositor: registry.compositor)
-
-        let xdgSurface = XDGSurface(
-            xdgWmBase: registry.xdgWmBase,
-            surface: surface,
-            configure: {
-                [sharedMemoryBuffer = registry.sharedMemoryBuffer!] in
-                // this api is shit, TODO: fix it
-                let shm = SharedMemoryBuffer(shm: sharedMemoryBuffer, size: UInt(size))
-                let pool = shm.createPool()
-
-                let buffer = pool.createBuffer(
-                    offset: 0, width: w, height: h, stride: 4 * w)
-
-                // rendering
-
-                surface.attach(buffer: buffer)
-                surface.damage()
-                surface.commit()
-            }
-        )
-
-        var xdgTopLevel = XDGTopLevel(surface: xdgSurface)
-        xdgTopLevel.title = "Asd"
-
-        surface.commit()
-        display.roundtrip()
-        display.dispatch()
 
         Task {
             var i = 0
@@ -128,7 +97,7 @@ struct graphics_101 {
             print(data)
         }
 
-        display.monitorEvents()
+
 
         RunLoop.main.run()
     }

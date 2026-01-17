@@ -2,9 +2,6 @@ import CWayland
 import Foundation
 import Glibc
 
-struct Window {
-
-}
 
 public enum InitWaylandError: Error {
     case noXdgRuntimeDirectory
