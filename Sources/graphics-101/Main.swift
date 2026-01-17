@@ -75,9 +75,7 @@ struct graphics_101 {
         let h: Int32 = 480
         let size = w * h * 4 * 4
 
-        // let surface = pls_create_surface(state.compositor!)
         let surface = Surface(compositor: registry.compositor)
-        // // sleep(1)
 
         let xdgSurface = XDGSurface(
             xdgWmBase: registry.xdgWmBase,
@@ -106,19 +104,6 @@ struct graphics_101 {
         let n = display.roundtrip()
         print("roundtrip \(n)")
 
-        // let handle = display.handle
-        // let source = DispatchSource.makeReadSource(fileDescriptor: handle.fileDescriptor)
-
-        // handle.waitForDataInBackgroundAndNotify()
-        // let observer = NotificationCenter.default.addObserver(
-        //     forName: .NSFileHandleDataAvailable, object: handle, queue: .main
-        // ) { notification in
-        //     print("what \(notification.object!)")
-        //     let n = display.dispatch()
-        //     print("processed \(n) events")
-        //     // handle.waitForDataInBackgroundAndNotify()
-        // }
-
         let poller = display.initPolling()
 
         DispatchQueue.global(qos: .userInteractive).async {
@@ -134,7 +119,7 @@ struct graphics_101 {
                 display.readEvent()
                 DispatchQueue.main.sync {
                     let n = display.dispatchPending()
-                    // print("processed \(n) events")
+                    print("processed \(n) events")
                 }
             }
         }
@@ -142,9 +127,9 @@ struct graphics_101 {
         Task {
             var i = 0
             while !Task.isCancelled {
-                try await Task.sleep(for: .seconds(1))
                 print("[count] \(i) (\(Date.now))")
                 i += 1
+                try await Task.sleep(for: .seconds(1))
             }
         }
 

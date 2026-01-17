@@ -19,7 +19,4 @@ const struct _WaylandInterfaces WaylandInterfaces = {
     .compositor = &wl_compositor_interface,
     .xdgWmBase = &xdg_wm_base_interface};
 
-void *pls_create_surface(struct wl_compositor *wl_compositor);
-void whatTheFuck();
-
 #endif
