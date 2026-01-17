@@ -1,3 +1,4 @@
+import CoreFoundation
 import Foundation
 import Wayland
 
@@ -68,21 +69,90 @@ func shi() async throws {
 struct graphics_101 {
     static func main() throws {
         let display = try Display()
+        let registry = display.registry
 
-        DispatchQueue.global().async {
-            // epoll here then
-            // MainActor.run { }
+        let w: Int32 = 640
+        let h: Int32 = 480
+        let size = w * h * 4 * 4
+
+        // let surface = pls_create_surface(state.compositor!)
+        let surface = Surface(compositor: registry.compositor)
+        // // sleep(1)
+
+        let xdgSurface = XDGSurface(xdgWmBase: registry.xdgWmBase, surface: surface) {
+            [sharedMemoryBuffer = registry.sharedMemoryBuffer!] in
+            // this api is shit, TODO: fix it
+            let shm = SharedMemoryBuffer(shm: sharedMemoryBuffer, size: UInt(size))
+            let pool = shm.createPool()
+
+            let buffer = pool.createBuffer(
+                offset: 0, width: w, height: h, stride: 4 * w)
+
+            // rendering
+
+            surface.attach(buffer: buffer)
+            surface.damage()
+            surface.commit()
         }
 
-        print("next")
-        // Task {
-        //     try await Task.sleep(for: .seconds(1))
-        //     print("sdsfds")
+        var xdgTopLevel = XDGTopLevel(surface: xdgSurface)
+        xdgTopLevel.title = "Asd"
+
+        surface.commit()
+        _ = display.dispatch()
+
+        let poller = display.initPolling()
+        // RunLoop actually use epoll too. but its pain to use that handle for something else.
+        // its pretty much legacy/private api
+
+        // Task(executorPreference: globalConcurrentExecutor) {
+
+        // }
+        DispatchQueue.global(qos: .userInteractive).async {
+            while !Task.isCancelled {
+                poller.wait()
+                let n = display.dispatch()
+                print("processed \(n) events")
+            }
+        }
+
+        Task {
+            var i = 0
+            while !Task.isCancelled {
+                try await Task.sleep(for: .seconds(1))
+                print("[count] \(i) (\(Date.now))")
+                i += 1
+            }
+        }
+
+        // while display.dispatch() != -1 {
+        //     // RunLoop.current.limitDate(forMode: .default)
         // }
 
-        // how do i interface with wayland shit tho
-        let port = SocketPort()
+        // print("Done")
 
+        // how do i interface with wayland shit tho
+
+        // https://github.com/swiftlang/swift-corelibs-foundation/blob/8e01f9a71bf0138f0049671a6312dc59ceae371f/Sources/Foundation/RunLoop.swift#L83
+
+        // let port = Port()
+
+        // let _cfRunLoopStorage = Mirror(reflecting: RunLoop.main, ).children.first {
+        //     $0.label == "_cfRunLoopStorage"
+        // }!.value
+        // let rl = unsafeBitCast(_cfRunLoopStorage, to: CFRunLoop?.self)!
+
+        // // rl.
+        // // CFRunLoopAddSource(rl, CFRunLoopSource!, )
+        // // RunLoop.main._add(source, forMode: .common)
+        // var context = CFRunLoopSourceContext()
+
+        // let allocator = CFAllocatorGetDefault()!
+        // let source = CFRunLoopSourceCreate(allocator.takeRetainedValue(), 0, &context)!
+        // allocator.release()
+
+        // RunLoop.main.add(port, forMode: .default)
+        // RunLoop.main.add(Port, forMode: RunLoop.Mode)
         RunLoop.main.run()
     }
 }

@@ -46,10 +46,10 @@ func wtf() throws(InitWaylandError) -> Int32 {
     return fd
 }
 
-public struct State {
-    var compositor: OpaquePointer!
-    var sharedMemoryBuffer: OpaquePointer!
-    var xdgWmBase: OpaquePointer!
+public struct Registry {
+    public internal(set) var compositor: OpaquePointer!
+    public internal(set) var sharedMemoryBuffer: OpaquePointer!
+    public internal(set) var xdgWmBase: OpaquePointer!
 }
 
 nonisolated(unsafe) var listener = wl_registry_listener(
@@ -59,11 +59,13 @@ nonisolated(unsafe) var listener = wl_registry_listener(
     }
 )
 
-public struct Display {
-    var state: State
+public struct Display: @unchecked Sendable {
+    public private(set) var registry: Registry
+    let display: OpaquePointer
+    let fd: Int32
 
     public init() throws(InitWaylandError) {
-        self.state = State()
+        self.registry = Registry()
 
         // return
         let waylandDisplay = ProcessInfo.processInfo.environment["WAYLAND_DISPLAY"] ?? "wayland-0"
@@ -72,46 +74,46 @@ public struct Display {
             throw .cannotConnect
         }
 
+        self.display = display
+        self.fd = wl_display_get_fd(display)
+
         let registry = wl_display_get_registry(display)!
 
-        wl_registry_add_listener(registry, &listener, &state)
+        wl_registry_add_listener(registry, &listener, &self.registry)
         wl_display_roundtrip(display)
+    }
 
-        let w: Int32 = 640
-        let h: Int32 = 480
-        let size = w * h * 4 * 4
+    public func dispatch() -> Int32 {
+        wl_display_dispatch(display)
+    }
 
-        // let surface = pls_create_surface(state.compositor!)
-        let surface = Surface(compositor: state.compositor)
-        // // sleep(1)
+    public func initPolling() -> EventPoller {
+        EventPoller(displayFd: fd)
+    }
+}
 
-        let xdgSurface = XDGSurface(xdgWmBase: state.xdgWmBase, surface: surface) {
-            [sharedMemoryBuffer = state.sharedMemoryBuffer!] in
-            let shm = SharedMemoryBuffer(shm: sharedMemoryBuffer, size: UInt(size))
-            let pool = shm.createPool()
+public struct EventPoller: Sendable, ~Copyable {
+    let fd: Int32
 
-            let buffer = pool.createBuffer(
-                offset: 0, width: w, height: h, stride: 4 * w, format: WL_SHM_FORMAT_XRGB8888)
+    init(displayFd: Int32) {
+        self.fd = epoll_create1(0)
 
-            // rendering
+        var ev = epoll_event(events: EPOLLIN.rawValue | EPOLLET.rawValue, data: .init(fd: displayFd))
+        epoll_ctl(fd, EPOLL_CTL_ADD, displayFd, &ev)
+    }
 
-            surface.attach(buffer: buffer)
-            surface.damage()
-            surface.commit()
-        }
-        var xdgTopLevel = XDGTopLevel(surface: xdgSurface)
-        xdgTopLevel.title = "Asd"
+    public func wait() {
+        var events: [epoll_event] = []
+        epoll_wait(fd, &events, 0, -1)
+    }
 
-        surface.commit()
-
-        while wl_display_dispatch(display) != 0 {
-
-        }
+    public consuming func destroy() {
+        close(fd)
     }
 }
 
 nonisolated(unsafe) private var pongListener = xdg_wm_base_listener { data, xdgWmBase, serial in
-    // wtf, it crash if i uncomment this 
+    // wtf, it crash if i uncomment this
     // print("ping")
     xdg_wm_base_pong(xdgWmBase, serial)
 }
@@ -123,7 +125,7 @@ func listenerCallback(
     // print("global(listenerCallback): \(name)")
     let interface = String(utf8String: interface!)!
 
-    data?.withMemoryRebound(to: State.self, capacity: 1) { ptr in
+    data?.withMemoryRebound(to: Registry.self, capacity: 1) { ptr in
         switch interface {
         case String(utf8String: WaylandInterfaces.compositor.pointee.name)!:
             ptr.pointee.compositor = OpaquePointer(

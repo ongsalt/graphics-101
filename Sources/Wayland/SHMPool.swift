@@ -1,16 +1,16 @@
 import CWayland
 import Glibc
 
-struct SHMPool {
+public struct SHMPool {
     let pool: OpaquePointer
     let poolData: UnsafeMutableRawPointer
 
-    init(shm: SharedMemoryBuffer, fd: Int32, size: Int32) {
+    public init(shm: SharedMemoryBuffer, fd: Int32, size: Int32) {
         poolData = mmap(nil, Int(size), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)!
         pool = wl_shm_create_pool(shm.shm, fd, size)!
     }
 
-    func createBuffer(offset: Int32, width: Int32, height: Int32, stride: Int32, format: wl_shm_format)
+    public func createBuffer(offset: Int32, width: Int32, height: Int32, stride: Int32, format: wl_shm_format = WL_SHM_FORMAT_XRGB8888)
         -> Buffer
     {
         Buffer(
@@ -20,7 +20,7 @@ struct SHMPool {
 
     // 4 bytes????
     // TODO:
-    subscript(offset: UInt32) -> UInt32 {
+    public subscript(offset: UInt32) -> UInt32 {
         get {
             poolData.load(fromByteOffset: Int(offset), as: UInt32.self)
         }

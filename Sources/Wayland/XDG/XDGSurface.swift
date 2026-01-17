@@ -2,12 +2,12 @@ import CWayland
 import Glibc
 
 // we shuold actually do codegen
-class XDGSurface {
+public class XDGSurface {
     let surface: OpaquePointer
-    var listener: xdg_surface_listener
+    private(set) var listener: xdg_surface_listener
     let configure: () -> Void
 
-    init(
+    public init(
         xdgWmBase: OpaquePointer, surface waylandSurface: Surface,
         configure: @escaping () -> Void = {}
     ) {
@@ -16,6 +16,8 @@ class XDGSurface {
 
         listener = xdg_surface_listener { data, surface, serial -> Void in
             Retained<XDGSurface>.run(fromPointer: data!) { this in
+                // print("configure requested")
+
                 this.configure()
 
                 xdg_surface_ack_configure(this.surface, serial)
