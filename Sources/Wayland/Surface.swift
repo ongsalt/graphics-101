@@ -1,6 +1,6 @@
 import CWayland
 
-public struct Surface {
+public class Surface {
     let surface: OpaquePointer
 
     public init(compositor: OpaquePointer) {

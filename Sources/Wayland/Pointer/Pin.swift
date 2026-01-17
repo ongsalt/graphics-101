@@ -1,8 +1,8 @@
-class Pin<T> {
+public class Pin<T> {
     public let ptr: UnsafeMutablePointer<T>
     public let opaque: OpaquePointer
 
-    init(_ value: T) {
+    public init(_ value: T) {
         ptr = UnsafeMutablePointer.allocate(capacity: 1)
         ptr.initialize(to: value)
 
@@ -20,7 +20,7 @@ class Pin<T> {
 
 
     // lmao
-    func immortalize() {
+    public func immortalize() {
         Unmanaged.passRetained(self).retain().retain()
     }
  

@@ -1,7 +1,7 @@
 import CWayland
 import Glibc
 
-public struct SHMPool {
+public class SHMPool {
     let pool: OpaquePointer
     let poolData: UnsafeMutableRawPointer
 

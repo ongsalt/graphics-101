@@ -13,10 +13,6 @@ struct _WaylandInterfaces {
   struct wl_interface *xdgWmBase;
 };
 
-const struct _WaylandInterfaces WaylandInterfaces = {
-    .surface = &wl_surface_interface,
-    .shm = &wl_shm_interface,
-    .compositor = &wl_compositor_interface,
-    .xdgWmBase = &xdg_wm_base_interface};
+const struct _WaylandInterfaces WaylandInterfaces;
 
 #endif

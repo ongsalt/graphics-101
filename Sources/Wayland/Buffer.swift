@@ -2,10 +2,24 @@ import CWayland
 import Glibc
 
 // content of a wl_surface
-public struct Buffer {
+public class Buffer {
     let buffer: OpaquePointer
+    let bufferData: UnsafeMutableRawPointer
+
+    let offset: Int32
+    let width: Int32
+    let height: Int32
+    let stride: Int32
+    let format: wl_shm_format
 
     init(pool: SHMPool, offset: Int32, width: Int32, height: Int32, stride: Int32, format: wl_shm_format) {
+        self.format = format
+        self.offset = offset
+        self.width = width
+        self.height = height
+        self.stride = stride
+        self.bufferData = pool.poolData.advanced(by: Int(offset))
+
         buffer = wl_shm_pool_create_buffer(
             pool.pool, offset,
             width, height, stride, format.rawValue

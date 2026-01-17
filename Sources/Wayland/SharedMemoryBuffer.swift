@@ -2,7 +2,7 @@ import CWayland
 import Foundation
 import Glibc
 
-public struct SharedMemoryBuffer {
+public class SharedMemoryBuffer {
     let shm: OpaquePointer
     let fd: Int32
     let size: UInt

@@ -1,13 +1,15 @@
 // This is ass api
 // TODO: redesign it
-class Retained<T: AnyObject> {
+public class Retained<T: AnyObject> {
     let instance: Unmanaged<T>
 
-    init(_ value: T) {
+    public init(_ value: T) {
         instance = Unmanaged.passRetained(value)
     }
 
-    static func run<S>(fromPointer: UnsafeMutableRawPointer, once: Bool = false, _ block: (T) -> S)
+    public static func run<S>(
+        fromPointer: UnsafeMutableRawPointer, once: Bool = false, _ block: (T) -> S
+    )
         -> S
     {
         fromPointer.withMemoryRebound(to: Unmanaged<T>.self, capacity: 1) { pointer in
@@ -23,14 +25,13 @@ class Retained<T: AnyObject> {
         }
     }
 
-    func pointer() -> UnsafeMutablePointer<Unmanaged<T>> {
+    public func pointer() -> UnsafeMutablePointer<Unmanaged<T>> {
         let pointer = UnsafeMutablePointer<Unmanaged<T>>.allocate(capacity: 1)
         pointer.initialize(to: self.instance)
         return pointer
     }
 
-    consuming func stop() {
+    public consuming func stop() {
         instance.takeRetainedValue()
     }
-
 }
