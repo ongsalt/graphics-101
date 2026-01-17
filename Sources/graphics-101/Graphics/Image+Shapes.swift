@@ -37,6 +37,7 @@ private func isInsideRoundedRectangle(
     -> Bool
 {
     let (x, y) = position
+    let cr = min(cr, min(r.width, r.height) / 2)
 
     // there is 4 corner and 2 overlapping rect h and v
 
