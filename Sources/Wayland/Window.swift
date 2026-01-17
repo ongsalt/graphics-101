@@ -8,39 +8,53 @@ open class Window {
     public let xdgTopLevel: XDGTopLevel
 
     public let width: Int32
-    public let heigh: Int32
+    public let height: Int32
 
     // TODO: fix buffer size
-    lazy var shm = SharedMemoryBuffer(
-        shm: display.registry.sharedMemoryBuffer, size: UInt(width * heigh * 4 * 4))
-    lazy var pool = shm.createPool()
-    lazy var buffer = pool.createBuffer(offset: 0, width: width, height: heigh, stride: 4 * width)
+    // TODO: move wayland display init out of this
+    lazy var shm: SharedMemoryBuffer = SharedMemoryBuffer(
+        shm: display.registry.sharedMemoryBuffer, size: UInt(width * height * 4 * 4))
+    public lazy var pool: SHMPool = shm.createPool()
+    lazy var buffer: Buffer = pool.createBuffer(
+        offset: 0, width: width, height: height, stride: 4 * width)
+
+    public var poolData: UnsafeMutableRawPointer {
+        pool.poolData
+    }
 
     public init() throws(InitWaylandError) {
         display = try Display()
         let registry = display.registry
 
         width = 640
-        heigh = 480
-        // let size = width * heigh * 4 * 4
+        height = 480
+        // let size = width * height * 4 * 4
 
         surface = Surface(compositor: registry.compositor)
         // let this = TrustMeBro<Window>()
         let this = Box<Window?>(nil)
-
+        var onced = false
         xdgSurface = XDGSurface(
             xdgWmBase: registry.xdgWmBase,
             surface: surface,
             configure: { [this] in
                 let this = this.value!
                 // this api is shit, TODO: fix it
-                
-                memset(this.pool.poolData, 0xf2986b, Int(this.width * this.heigh * 4 / 2))
-                // rendering
 
-                this.surface.attach(buffer: this.buffer)
-                this.surface.damage()
-                this.surface.commit()
+                print("configure requested")
+                if !onced {
+                    print("recrreate")
+                    this.pool.poolData.initializeMemory(
+                        as: UInt32.self, repeating: 0xf298_6bff,
+                        count: Int(this.width * this.height * 4 / 2))
+                    onced = true
+
+                    this.surface.attach(buffer: this.buffer)
+                    this.surface.damage()
+                    this.surface.commit()
+                }
+
+                // rendering
             }
         )
 
@@ -52,7 +66,17 @@ open class Window {
         surface.commit()
         display.roundtrip()
         display.dispatch()
+    }
 
+    public func show() {
+        requestRedraw()
         display.monitorEvents()
     }
+
+    public func requestRedraw() {
+        surface.attach(buffer: buffer)
+        surface.damage()
+        surface.commit()
+    }
+
 }

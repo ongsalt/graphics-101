@@ -70,7 +70,17 @@ struct Image {
         pixels[getPixelIndex(x: x, y: y, fillEdge: fillEdge)]
     }
 
-    func write(to url: URL) throws {
+    func write(to pointer: UnsafeMutableRawPointer, size: Int) {
+        let pointer = UnsafeMutablePointer<UInt32>(OpaquePointer(pointer))
+        let buffer = UnsafeMutableBufferPointer<UInt32>(start: pointer, count: size)
+        // assume color mode to be rgba 1 bytes each
+        // cant memcopy because our color is float
+        for (offset, pixel) in pixels.enumerated() {
+            buffer[offset] = pixel.toUInt32()
+        }
+    }
+
+    func save(to url: URL) throws {
         _ = try FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
 

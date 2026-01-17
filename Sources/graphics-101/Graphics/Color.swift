@@ -19,6 +19,14 @@ struct Color {
         )
     }
 
+    func toUInt32() -> UInt32 {
+        let (r, g, b, a) = toUInt8()
+        return (UInt32(r) << (0 * 8)) // 0x12
+            | (UInt32(g) << (1 * 8))  // 0x3400
+            | (UInt32(b) << (2 * 8))  // 0x560000
+            | (UInt32(a) << (3 * 8))  // 0x78000000
+    }
+
     // shitty alpha blending
     func lerp(_ other: Color, progress p: Float) -> Color {
         let p2 = 1 - p

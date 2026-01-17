@@ -12,7 +12,7 @@ struct Renderer {
             for i in (1...self.frameCount) {
                 let image = renderFn(i)
 
-                try! image.write(to: URL(filePath: "./ppm/\(i).ppm"))
+                try! image.save(to: URL(filePath: "./ppm/\(i).ppm"))
 
                 // wtf, concurrency???
                 progress.completedUnitCount += 1

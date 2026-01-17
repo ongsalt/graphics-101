@@ -3,7 +3,7 @@ import Glibc
 
 public class SHMPool {
     let pool: OpaquePointer
-    let poolData: UnsafeMutableRawPointer
+    public let poolData: UnsafeMutableRawPointer
 
     public init(shm: SharedMemoryBuffer, fd: Int32, size: Int32) {
         poolData = mmap(nil, Int(size), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)!

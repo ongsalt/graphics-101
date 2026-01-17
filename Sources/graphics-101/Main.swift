@@ -1,8 +1,51 @@
 import Foundation
 import FoundationNetworking
 import Wayland
-import Glibc
 
+func createImage(width: Int, height: Int) -> Image {
+    var image = Image(width: width, height: height, fill: .grey)
+    image.fillRectangle(
+        rect: Rect(
+            top: 0, left: 0, width: Float(image.width), height: Float(image.height))
+    ) { x, y, _ in
+        Color(
+            r: Float(x) / Float(width) / 3 + 0.3,
+            g: 0.3,
+            b: Float(y) / Float(height) / 3 + 0.3,
+            a: 1.0)
+    }
+
+    let center: (Float, Float) = (280, 280)
+    let radius: Float = 240
+    image.fillSuperellipse(center: center, radius: radius, degree: 4) {
+        x, y, below in
+        Color(
+            r: (Float(x) - center.0 + radius) / (radius * 2),
+            g: (Float(y) - center.1 + radius) / (radius * 2),
+            b: 0.5,
+            a: 1.0)
+    }
+
+    let rect = Rect(top: 24, left: 24, width: 90 * 1.5, height: 195 * 1.5)
+    var blurTexture = image.cropped(at: rect)
+
+    blurTexture.blur(radius: 100)
+
+    // TODO: clip
+    // image.blit(from: blurTexture, to: rect)
+
+    // TODO: saturation
+    image.fillRoundedRectangle(rect: rect, cornerRadius: 48) { x, y, below in
+        // below.overlay(.white)
+        // below.multiply(scalar: 2)
+        blurTexture
+            .colorAt(x: x - 24, y: y - 24)
+            .multiply(scalar: 2)
+            .lerp(Color(r: 0.7, g: 0.7, b: 0.7, a: 1.0), progress: 0.3)
+    }
+
+    return image
+}
 
 func shi() async throws {
     try FileManager.default.createDirectory(
@@ -15,50 +58,11 @@ func shi() async throws {
         for i in (1...10) {
             group.addTask {
                 let startTime = clock.now
-                var image = Image(width: 1920, height: 1080, fill: .grey)
-                image.fillRectangle(
-                    rect: Rect(
-                        top: 0, left: 0, width: Float(image.width), height: Float(image.height))
-                ) { x, y, _ in
-                    Color(
-                        r: Float(x) / 1920 / 3 + 0.3,
-                        g: 0.3,
-                        b: Float(y) / 1080 / 3 + 0.3,
-                        a: 1.0)
-                }
-
-                let center: (Float, Float) = (640, 640)
-                let radius: Float = 420
-                image.fillSuperellipse(center: center, radius: radius, degree: 4) {
-                    x, y, below in
-                    Color(
-                        r: (Float(x) - center.0 + radius) / (radius * 2),
-                        g: (Float(y) - center.1 + radius) / (radius * 2),
-                        b: 0.5,
-                        a: 1.0)
-                }
-
-                let rect = Rect(top: 24, left: 24, width: 90 * 4, height: 195 * 4)
-                var blurTexture = image.cropped(at: rect)
-
-                blurTexture.blur(radius: 100)
-
-                // TODO: clip
-                // image.blit(from: blurTexture, to: rect)
-
-                // TODO: saturation
-                image.fillRoundedRectangle(rect: rect, cornerRadius: 48 * 3) { x, y, below in
-                    // below.overlay(.white)
-                    // below.multiply(scalar: 2)
-                    blurTexture
-                        .colorAt(x: x - 24, y: y - 24)
-                        .multiply(scalar: 2)
-                        .lerp(Color(r: 0.7, g: 0.7, b: 0.7, a: 1.0), progress: 0.3)
-                }
+                let image = createImage(width: 1920, height: 1080)
 
                 print("[g101] Rendered frame \(i) in \(clock.now - startTime)")
                 // print("[g101] Writing output...")
-                try! image.write(to: URL(filePath: "./ppm/\(i).ppm"))
+                try! image.save(to: URL(filePath: "./ppm/\(i).ppm"))
             }
         }
 
@@ -72,9 +76,20 @@ struct graphics_101 {
     @MainActor
     static func main() throws {
         let window = try Window()
-        // window.pool
 
+        // Task {
+        // let image = createImage(width: 500, height: 500)
+        // }
+        Task {
+            let image = createImage(width: 640, height: 480)
+            image.write(to: window.poolData, size: 1000 * 1000 * 4 * 4)  // for now
+            let value = window.poolData.load(as: UInt32.self)
+            print(String(value, radix: 16))
+        }
 
+        window.show()
+
+        print("showwed")
         Task {
             var i = 0
             while !Task.isCancelled {
@@ -96,8 +111,6 @@ struct graphics_101 {
 
             print(data)
         }
-
-
 
         RunLoop.main.run()
     }
