@@ -64,6 +64,11 @@ public class Display: @unchecked Sendable {
     let display: OpaquePointer
     let fd: Int32
 
+    private var source: (any DispatchSourceRead)? = nil
+    public var isMonitoring: Bool {
+        source != nil
+    }
+
     public init() throws(InitWaylandError) {
         self.registry = Registry()
 
@@ -83,47 +88,26 @@ public class Display: @unchecked Sendable {
         _ = roundtrip()
     }
 
-    public func monitorEvents(
-        runloop: RunLoop,
-    ) {
-
-    }
-
-    public func monitorEvents(
-        on queue: DispatchQueue,
-    ) {
-        queue.async {
-            while !Task.isCancelled {
-                let n = self.dispatch()
-                print("processed \(n) events")
-            }
-        }
-    }
-
     // this is ass
     public func monitorEvents(
-        on listenQueue: DispatchQueue = .global(qos: .default),
-        dispatchOn runQueue: DispatchQueue,
+        queue: DispatchQueue = .main,
     ) {
-        let poller = initPolling()
+        guard self.source == nil else { return }
 
-        listenQueue.async {
-            // let a = DispatchSource.makeReadSource(fileDescriptor: 1)
-            while !Task.isCancelled {
-                while self.prepareRead() != 0 {
-                    _ = runQueue.sync { self.dispatchPending() }
-                }
-                self.flush()
-
-                poller.wait()
-
-                self.readEvent()
-                runQueue.async {
-                    let n = self.dispatchPending()
-                    // print("processed \(n) events")
-                }
-            }
+        let source = DispatchSource.makeReadSource(fileDescriptor: fd, queue: queue)
+        source.setEventHandler { [unowned self] in
+            self.prepareRead()
+            self.readEvent()
+            self.dispatchPending()
+            self.flush()
         }
+
+        source.resume()
+        self.source = source
+    }
+
+    public func stopMonitoring() {
+        self.source = nil
     }
 
     @discardableResult
@@ -155,34 +139,8 @@ public class Display: @unchecked Sendable {
         wl_display_roundtrip(display)
     }
 
-    @discardableResult
-    public func initPolling() -> EventPoller {
-        EventPoller(displayFd: fd)
-    }
-
     public var handle: FileHandle {
         FileHandle(fileDescriptor: fd)
-    }
-}
-
-public final class EventPoller: Sendable {
-    let fd: Int32
-
-    init(displayFd: Int32) {
-        self.fd = epoll_create1(0)
-
-        var ev = epoll_event(
-            events: EPOLLIN.rawValue | EPOLLET.rawValue, data: .init(fd: displayFd))
-        epoll_ctl(fd, EPOLL_CTL_ADD, displayFd, &ev)
-    }
-
-    public func wait() {
-        var events: [epoll_event] = []
-        epoll_wait(fd, &events, 1, -1)
-    }
-
-    public consuming func destroy() {
-        close(fd)
     }
 }
 

@@ -128,11 +128,7 @@ struct graphics_101 {
             print(data)
         }
 
-        // non blocking
-
-        // print(ProcessInfo.processInfo.processIdentifier)
-        // let p = DispatchQueue(label: "wayland-poller")
-        // display.monitorEvents(on: p)
+        display.monitorEvents()
 
         RunLoop.main.run()
     }

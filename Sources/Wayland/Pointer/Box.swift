@@ -5,4 +5,8 @@ public class Box<T> {
     public init(_ value: T) {
         self.value = value
     }
+
+    public func leak() {
+        Unmanaged.passRetained(self)
+    }
 }
