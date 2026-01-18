@@ -13,3 +13,7 @@ wayland-scanner client-header < /usr/share/wayland-protocols/stable/xdg-shell/xd
 wayland-scanner private-code < /usr/share/wayland-protocols/staging/xdg-toplevel-drag/xdg-toplevel-drag-v1.xml > xdg-toplevel-drag-v1-protocol.c
 wayland-scanner client-header < /usr/share/wayland-protocols/staging/xdg-toplevel-drag/xdg-toplevel-drag-v1.xml > xdg-toplevel-drag-v1-client-protocol.h
 ```
+
+
+## TODO
+- clip

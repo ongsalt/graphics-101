@@ -12,11 +12,9 @@ open class Window {
 
     // TODO: fix buffer size
     // TODO: move wayland display init out of this
-    lazy var shm: SharedMemoryBuffer = SharedMemoryBuffer(
-        shm: display.registry.sharedMemoryBuffer, size: UInt(width * height * 4 * 4))
-    public lazy var pool: SHMPool = shm.createPool()
-    lazy var buffer: Buffer = pool.createBuffer(
-        offset: 0, width: width, height: height, stride: 4 * width)
+    var shm: SharedMemoryBuffer!
+    var pool: SHMPool!
+    var buffer: Buffer!
 
     public var poolData: UnsafeMutableRawPointer {
         pool.poolData
@@ -32,7 +30,7 @@ open class Window {
         surface = Surface(compositor: registry.compositor)
 
         let this = Box<Window?>(nil)
-        var onced = false
+
         xdgSurface = XDGSurface(
             xdgWmBase: registry.xdgWmBase,
             surface: surface,
@@ -40,18 +38,7 @@ open class Window {
                 let this = this.value!
                 // this api is shit, TODO: fix it
 
-                // print("configure requested")
-                if !onced {
-                    // print("recreate")
-                    this.pool.poolData.initializeMemory(
-                        as: UInt32.self, repeating: 0xf298_6bff,
-                        count: Int(this.width * this.height * 4 / 2))
-                    onced = true
-
-                    this.surface.attach(buffer: this.buffer)
-                    this.surface.damage()
-                    this.surface.commit()
-                }
+                this.initBuffer()
 
                 // rendering
             }
@@ -66,16 +53,35 @@ open class Window {
         display.dispatch()
     }
 
-    public func show() {
-        requestRedraw()
-        display.monitorEvents()
+    private func initBuffer() {
+        if shm != nil { return }
+
+        shm = SharedMemoryBuffer(
+            shm: display.registry.sharedMemoryBuffer, size: UInt(width * height * 4 * 4))
+        pool = shm.createPool()
+        buffer = pool.createBuffer(
+            offset: 0, width: width, height: height, stride: 4 * width)
+
+        pool.poolData.initializeMemory(
+            as: UInt32.self, repeating: 0xf298_6bff,
+            count: Int(width * height * 4 / 2))
+
+        surface.attach(buffer: buffer)
+        surface.damage()
+        surface.commit()
     }
 
-    public func requestRedraw() {
+    public func show() {
+        requestRedraw()
+    }
+
+    public func requestRedraw(flush: Bool = true) {
         // surface.attach(buffer: buffer)
         surface.damage()
         surface.commit()
-        display.flush()
+        if flush {
+            display.flush()
+        }
     }
 
 }

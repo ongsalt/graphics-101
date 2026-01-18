@@ -2,7 +2,6 @@ import CWayland
 import Foundation
 import Glibc
 
-
 public enum InitWaylandError: Error {
     case noXdgRuntimeDirectory
     case cannotOpenSocket
@@ -47,6 +46,7 @@ public struct Registry {
     public internal(set) var compositor: OpaquePointer!
     public internal(set) var sharedMemoryBuffer: OpaquePointer!
     public internal(set) var xdgWmBase: OpaquePointer!
+    public internal(set) var xdgTopLevelDrag: XDGTopLevelDrag!
 }
 
 nonisolated(unsafe) var listener = wl_registry_listener(
@@ -172,6 +172,12 @@ func listenerCallback(
                 ptr.pointee.xdgWmBase,
                 &pongListener,
                 nil
+            )
+
+        case String(utf8String: WaylandInterfaces.xdgToplevelDragV1.pointee.name)!:
+            ptr.pointee.xdgTopLevelDrag = XDGTopLevelDrag(
+                OpaquePointer(
+                    wl_registry_bind(registry, name, WaylandInterfaces.xdgToplevelDragV1, 1))
             )
 
         default:

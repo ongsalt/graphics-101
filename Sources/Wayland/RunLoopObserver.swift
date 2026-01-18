@@ -1,10 +1,10 @@
 import CoreFoundation
 
-class RunLoopObserver {
+public class RunLoopObserver {
     let observer: CFRunLoopObserver
     let runLoop: CFRunLoop
 
-    init(
+    public init(
         on activities: [CFRunLoopActivity],
         repeated: Bool = true,
         runLoop: CFRunLoop = CFRunLoopGetCurrent(),
