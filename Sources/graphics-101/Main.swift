@@ -4,7 +4,7 @@ import Wayland
 
 func createImage(width: Int, height: Int) -> Image {
     var image = Image(width: width, height: height, fill: .transparent)
-    
+
     // TODO: set global clip
     image.fillRoundedRectangle(
         rect: Rect(top: 0, left: 0, width: Float(image.width), height: Float(image.height)),
@@ -86,17 +86,27 @@ struct graphics_101 {
         // let image = createImage(width: 500, height: 500)
         // }
         Task {
-            let image = createImage(width: 640, height: 480)
-            image.write(to: window.poolData, size: 1000 * 1000 * 4 * 4)  // for now
-            let value = window.poolData.load(as: UInt32.self)
-            // print(String(value, radix: 16))
-
-            await MainActor.run {
-                window.requestRedraw()
+            var i = 0
+            while !Task.isCancelled {
+                print("[count] \(i) (\(Date.now))")
+                i += 1
+                try await Task.sleep(for: .seconds(1))
             }
-            // i didnt call surface.update/damage or whatever
         }
 
+        Task {
+            print("start \(Date.now)")
+            let image = await Task.detached { createImage(width: 640, height: 480) }.value
+            print("end \(Date.now)")
+
+            // ideally image.write(to: surface, rect: Rect())
+            image.write(to: window.poolData, size: 1000 * 1000 * 4 * 4)  // for now
+            window.requestRedraw()
+
+            // let value = window.poolData.load(as: UInt32.self)
+            // print(String(value, radix: 16))
+
+        }
 
         RunLoop.main.run()
     }
