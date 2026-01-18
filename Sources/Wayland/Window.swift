@@ -73,15 +73,13 @@ open class Window {
 
     public func show() {
         requestRedraw()
+        display.flush()
     }
 
-    public func requestRedraw(flush: Bool = true) {
+    public func requestRedraw() {
         // surface.attach(buffer: buffer)
         surface.damage()
         surface.commit()
-        if flush {
-            display.flush()
-        }
     }
 
 }

@@ -78,12 +78,14 @@ struct graphics_101 {
     @MainActor
     static func main() throws {
         let display = try Display()
-        display.monitorEvents()
 
         let window = Window(display: display)
 
         window.show()
 
+
+        display.monitorEvents()
+        // auto flush?
         let observer = RunLoopObserver(on: [.beforeWaiting]) { _ in
             // print("flush")
             display.flush()
@@ -110,7 +112,7 @@ struct graphics_101 {
 
             // ideally image.write(to: surface, rect: Rect())
             image.write(to: window.poolData, size: 1000 * 1000 * 4 * 4)  // for now
-            window.requestRedraw(flush: false)
+            window.requestRedraw()
 
             // let value = window.poolData.load(as: UInt32.self)
             // print(String(value, radix: 16))
