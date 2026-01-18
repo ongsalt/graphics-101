@@ -5,6 +5,7 @@ import Glibc
 public class Buffer {
     let buffer: OpaquePointer
     let bufferData: UnsafeMutableRawPointer
+    private var listener: wl_buffer_listener
 
     let offset: Int32
     let width: Int32
@@ -12,7 +13,10 @@ public class Buffer {
     let stride: Int32
     let format: wl_shm_format
 
-    init(pool: SHMPool, offset: Int32, width: Int32, height: Int32, stride: Int32, format: wl_shm_format) {
+    init(
+        pool: SHMPool, offset: Int32, width: Int32, height: Int32, stride: Int32,
+        format: wl_shm_format
+    ) {
         self.format = format
         self.offset = offset
         self.width = width
@@ -25,16 +29,17 @@ public class Buffer {
             width, height, stride, format.rawValue
         )!
 
-
-        let ptr = Unmanaged.passUnretained(self).toOpaque()
-        var listener = wl_buffer_listener { ptr, _ in
+        listener = wl_buffer_listener { ptr, _ in
             let this = Unmanaged<Buffer>.fromOpaque(ptr!).takeUnretainedValue()
+
+            wl_buffer_destroy(this.buffer)
         }
 
+        let ptr = Unmanaged.passUnretained(self).toOpaque()
         wl_buffer_add_listener(buffer, &listener, ptr)
     }
 
     func s() {
-        
+
     }
 }

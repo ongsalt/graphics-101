@@ -15,21 +15,26 @@ public class XDGTopLevel {
 
         listener = xdg_toplevel_listener(
             configure: { (data, topLevel, w: Int32, h: Int32, _: UnsafeMutablePointer<wl_array>?) in
+                let this = Unmanaged<XDGTopLevel>.fromOpaque(data!).takeUnretainedValue()
 
             },
             close: { (data, topLevel) in
+                let this = Unmanaged<XDGTopLevel>.fromOpaque(data!).takeUnretainedValue()
 
             },
             configure_bounds: { (data, topLevel, w: Int32, h: Int32) in
+                let this = Unmanaged<XDGTopLevel>.fromOpaque(data!).takeUnretainedValue()
 
             },
             wm_capabilities: { (data, topLevel, wtf: UnsafeMutablePointer<wl_array>?) -> Void in
+                let this = Unmanaged<XDGTopLevel>.fromOpaque(data!).takeUnretainedValue()
 
             }
         )
 
         // print(observer)
-        xdg_toplevel_add_listener(topLevel, &listener, nil)
+        let this = Unmanaged.passUnretained(self).toOpaque()
+        xdg_toplevel_add_listener(topLevel, &listener, this)
     }
 
     public var title: String {

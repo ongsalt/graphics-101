@@ -7,3 +7,4 @@
 #include "idk.h"
 
 #include "xdg-shell-client-protocol.h"
+#include "xdg-toplevel-drag-v1-client-protocol.h"
