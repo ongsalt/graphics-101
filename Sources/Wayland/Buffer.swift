@@ -4,7 +4,7 @@ import Glibc
 // content of a wl_surface
 public class Buffer {
     let buffer: OpaquePointer
-    let bufferData: UnsafeMutableRawPointer
+    public let bufferData: UnsafeMutableRawBufferPointer
     private var listener: wl_buffer_listener
 
     let offset: Int32
@@ -22,7 +22,8 @@ public class Buffer {
         self.width = width
         self.height = height
         self.stride = stride
-        self.bufferData = pool.poolData.advanced(by: Int(offset))
+
+        self.bufferData = UnsafeMutableRawBufferPointer(start: pool.poolData.advanced(by: Int(offset)), count: Int(stride * height))
 
         buffer = wl_shm_pool_create_buffer(
             pool.pool, offset,

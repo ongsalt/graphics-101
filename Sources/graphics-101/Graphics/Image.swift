@@ -70,11 +70,9 @@ struct Image {
         pixels[getPixelIndex(x: x, y: y, fillEdge: fillEdge)]
     }
 
-    func write(to pointer: UnsafeMutableRawPointer, size: Int) {
-        let pointer = UnsafeMutablePointer<UInt32>(OpaquePointer(pointer))
-        let buffer = UnsafeMutableBufferPointer<UInt32>(start: pointer, count: size)
-        // assume color mode to be rgba 1 bytes each
-        // cant memcopy because our color is float
+    func write(to buffer: UnsafeMutableRawBufferPointer) {
+        let buffer = buffer.assumingMemoryBound(to: UInt32.self)
+
         for (offset, pixel) in pixels.enumerated() {
             buffer[offset] = pixel.toARGB8888()
         }

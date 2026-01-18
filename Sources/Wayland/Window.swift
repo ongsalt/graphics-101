@@ -1,5 +1,6 @@
 import Glibc
 
+// not actually a window
 open class Window {
     // override for window event
     public let display: Display
@@ -10,18 +11,19 @@ open class Window {
     public let width: Int32
     public let height: Int32
 
+    private let pool: SHMPool
     // TODO: fix buffer size
     // TODO: move wayland display init out of this
-    var shm: SharedMemoryBuffer!
-    var pool: SHMPool!
-    var buffer: Buffer!
+    private var buffer: Buffer!
 
-    public var poolData: UnsafeMutableRawPointer {
-        pool.poolData
+    public var currentBuffer: Buffer {
+        buffer
     }
 
-    public init(display: Display, width: Int32 = 640, height: Int32 = 480) {
+
+    public init(display: Display, pool: SHMPool, width: Int32 = 640, height: Int32 = 480) {
         self.display = display
+        self.pool = pool
         self.width = width
         self.height = height
 
@@ -36,29 +38,29 @@ open class Window {
             surface: surface,
             configure: { [this] in
                 let this = this.value!
+                print("configure requested")
                 // this api is shit, TODO: fix it
-
-                this.initBuffer()
 
                 // rendering
             }
         )
+        
+
 
         xdgTopLevel = XDGTopLevel(surface: xdgSurface)
         xdgTopLevel.title = "Asd"
 
-        this.value = self
+        // surface.opaqueRegion = Region(region: compos)
+        initBuffer()
 
+        this.value = self
         surface.commit()
         display.dispatch()
     }
 
     private func initBuffer() {
-        if shm != nil { return }
+        if buffer != nil { return }
 
-        shm = SharedMemoryBuffer(
-            shm: display.registry.sharedMemoryBuffer, size: UInt(width * height * 4 * 4))
-        pool = shm.createPool()
         buffer = pool.createBuffer(
             offset: 0, width: width, height: height, stride: 4 * width)
 

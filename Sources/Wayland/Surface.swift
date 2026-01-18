@@ -6,7 +6,7 @@ public class Surface {
     // var width: Int32
     private var runLoopObserver: RunLoopObserver? = nil
 
-    private var opaqueRegion: Region? = nil {
+    public var opaqueRegion: Region? = nil {
         didSet {
             wl_surface_set_opaque_region(surface, opaqueRegion?.region)
         }
