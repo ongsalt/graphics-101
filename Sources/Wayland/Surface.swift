@@ -29,17 +29,30 @@ public class Surface {
         // vsyncshufygd()
     }
 
-    nonisolated(unsafe) static var listener: wl_callback_listener = wl_callback_listener { thisPtr, cb, data in
+    private var onFrameCallback: (() -> Void)?
+    public func onFrame(runImmediately: Bool = false, _ block: @escaping () -> Void) {
+        onFrameCallback = block
+        if runImmediately {
+            block()
+        }
+        scheduleOnFrameCallback()
+    }
+
+    nonisolated(unsafe) static var listener: wl_callback_listener = wl_callback_listener {
+        thisPtr, cb, data in
         wl_callback_destroy(cb)
         let this = Unmanaged<Surface>.fromOpaque(thisPtr!).takeUnretainedValue()
 
-        this.vsyncshufygd()
+        if let onFrameCallback = this.onFrameCallback {
+            onFrameCallback()
+            this.scheduleOnFrameCallback()
+        }
 
         this.damage()
         this.commit()
     }
 
-    func vsyncshufygd() {
+    private func scheduleOnFrameCallback() {
         let cb = wl_surface_frame(surface)!
         let this = Unmanaged.passUnretained(self)
 

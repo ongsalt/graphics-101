@@ -2,12 +2,13 @@ import Foundation
 import FoundationNetworking
 import Wayland
 
-func createImage(width: Int, height: Int) -> Image {
+// TODO: reuse image texture
+func createImage(width: Int, height: Int, padding: Float = 8, cornerRadius: Float = 72) -> Image {
     var image = Image(width: width, height: height, fill: .transparent)
 
-    let padding: Float = 8
-    let cornerRadius: Float = 72
-    let bound = Rect(top: padding, left: padding, width: Float(image.width) - 2 * padding, height: Float(image.height) - 2 * padding)
+    let bound = Rect(
+        top: padding, left: padding, width: Float(image.width) - 2 * padding,
+        height: Float(image.height) - 2 * padding)
 
     // TODO: set global clip
 
@@ -76,19 +77,19 @@ func shi() async throws {
     let clock = ContinuousClock()
     let startTime = clock.now
 
-    await withTaskGroup(of: Void.self) { group in
-        for i in (1...10) {
-            group.addTask {
-                let startTime = clock.now
-                let image = createImage(width: 1920, height: 1080)
+    // await withTaskGroup(of: Void.self) { group in
+    //     for i in (1...10) {
+    //         group.addTask {
+    //             let startTime = clock.now
+    //             let image = createImage(width: 1920, height: 1080)
 
-                print("[g101] Rendered frame \(i) in \(clock.now - startTime)")
-                // print("[g101] Writing output...")
-                try! image.save(to: URL(filePath: "./ppm/\(i).ppm"))
-            }
-        }
+    //             print("[g101] Rendered frame \(i) in \(clock.now - startTime)")
+    //             // print("[g101] Writing output...")
+    //             try! image.save(to: URL(filePath: "./ppm/\(i).ppm"))
+    //         }
+    //     }
 
-    }
+    // }
 
     print("[g101] Done in \(clock.now - startTime)")
 }
@@ -103,13 +104,6 @@ struct graphics_101 {
 
         window.show()
 
-        display.monitorEvents()
-        // auto flush?
-        let observationToken = RunLoop.main.observe(on: [.beforeWaiting]) { _ in
-            // print("flush")
-            display.flush()
-        }
-
         // _ = consume observer
 
         // Task {
@@ -121,17 +115,31 @@ struct graphics_101 {
         //     }
         // }
 
-        Task {
-            // print("start \(Date.now)")
-            let image = await Task.detached { createImage(width: 640, height: 480) }.value
-            // print("end \(Date.now)")
+        var padding: Float = 0
+        // window.surface.onFrame(runImmediately: true) {
+        //     // print("called")
+        //     padding += 1
 
-            // ideally image.write(to: surface, rect: Rect())
-            image.write(to: window.poolData, size: 1000 * 1000 * 4 * 4)  // for now
-            window.requestRedraw()
+        //     Task { [padding] in
+        //         let start = ContinuousClock.now
+        //         let image = await Task.detached { [padding] in
+        //             createImage(width: 640, height: 480, padding: padding)
+        //         }.value
 
-            // let value = window.poolData.load(as: UInt32.self)
-            // print(String(value, radix: 16))
+        //         // ideally image.write(to: surface, rect: Rect())
+        //         image.write(to: window.poolData, size: 1000 * 1000 * 4 * 4)  // for now
+        //         window.requestRedraw()
+        //         let end = ContinuousClock.now
+        //         // print("Done in \(end - start)")
+        //         // bruh
+        //     }
+        // }
+
+        display.monitorEvents()
+        // auto flush?
+        let observationToken = RunLoop.main.observe(on: [.beforeWaiting]) { _ in
+            // print("flush")
+            display.flush()
         }
 
         RunLoop.main.run()
