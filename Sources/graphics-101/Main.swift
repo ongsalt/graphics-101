@@ -5,9 +5,13 @@ import Wayland
 func createImage(width: Int, height: Int) -> Image {
     var image = Image(width: width, height: height, fill: .transparent)
 
+    let padding: Float = 8
+    let bound = Rect(top: padding, left: padding, width: Float(image.width) - padding, height: Float(image.height) - padding)
+
     // TODO: set global clip
+
     image.fillRoundedRectangle(
-        rect: Rect(top: 0, left: 0, width: Float(image.width), height: Float(image.height)),
+        rect: bound,
         cornerRadius: 24
     ) { x, y, _ in
         Color(
@@ -17,13 +21,25 @@ func createImage(width: Int, height: Int) -> Image {
             a: 1.0)
     }
 
+    image.fillRoundedRectangleBorder(
+        rect: bound,
+        cornerRadius: 24,
+        borderWidth: 2
+    ) { x, y, _ in
+        Color.red
+    }
+
     let center: (Float, Float) = (280, 280)
     let radius: Float = 180
-    image.fillSuperellipse(center: center, radius: radius, degree: 4) {
+    // image.fillSuperellipse(center: center, radius: radius, degree: 4) {
+    image.fillRectangle(
+        rect: Rect(
+            top: center.1 - radius, left: center.0 - radius, width: radius * 2, height: radius * 2)
+    ) {
         x, y, below in
         Color(
-            r: (Float(x) - center.0 + radius) / (radius * 2),
-            g: (Float(y) - center.1 + radius) / (radius * 2),
+            r: ((Float(x) - center.0) + radius) / (radius * 2),
+            g: (-(Float(y) - center.1) + radius) / (radius * 2),
             b: 0.5,
             a: 1.0)
     }
@@ -31,7 +47,9 @@ func createImage(width: Int, height: Int) -> Image {
     let rect = Rect(top: 24, left: 24, width: 90 * 1.5, height: 195 * 1.5)
     var blurTexture = image.cropped(at: rect)
 
-    blurTexture.blur(radius: 100)
+    // box blur look like shit
+    blurTexture.blur(radius: 25)
+    blurTexture.blur(radius: 25)
 
     // TODO: clip
     // image.blit(from: blurTexture, to: rect)
@@ -42,7 +60,8 @@ func createImage(width: Int, height: Int) -> Image {
         // below.multiply(scalar: 2)
         blurTexture
             .colorAt(x: x - 24, y: y - 24)
-            .multiply(scalar: 2)
+            // probably gonna do brighness curve shit
+            .multiply(scalar: 1.7)
             .lerp(Color(r: 0.7, g: 0.7, b: 0.7, a: 1.0), progress: 0.3)
     }
 

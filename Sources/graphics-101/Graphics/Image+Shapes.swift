@@ -57,6 +57,27 @@ private func isInsideRoundedRectangle(
         || isInsideSuperellipse((x, y), center: (r.right - cr, r.bottom - cr), radius: cr)
 }
 
+// TODO: think about rotation: transform coordination system or do it directly
+private func isInsideRoundedRectangleBorder(
+    _ position: (Float, Float), rect r: Rect, cornerRadius cr: Float, degree: Int = 4,
+    borderWidth: Float = 1
+)
+    -> Bool
+{
+    let (x, y) = position
+    let cr = min(cr, min(r.width, r.height) / 2)
+
+    // there is 4 corner and 2 overlapping rect h and v
+
+    if abs(r.left - x) <= borderWidth || abs(r.right - x) <= borderWidth
+        || abs(r.top - y) <= borderWidth || abs(r.bottom - y) <= borderWidth
+    {
+        return true
+    }
+
+    return false
+}
+
 extension Image {
     mutating func fillCircle(center: (Float, Float), radius: Float, subpixelCount: Int = 4) {
         let (cx, cy) = center
@@ -190,6 +211,22 @@ extension Image {
             subpixelCount: 4,
             where: { x, y in
                 isInsideRoundedRectangle((x, y), rect: rect, cornerRadius: cornerRadius)
+            },
+            paint: paint
+        )
+    }
+
+    mutating func fillRoundedRectangleBorder(
+        rect: Rect,
+        cornerRadius: Float,
+        borderWidth: Float = 1,
+        paint: PaintFn = PAINT_WHITE
+    ) {
+        fillShape(
+            region: (Int(rect.left), Int(rect.right), Int(rect.top), Int(rect.bottom)),
+            subpixelCount: 4,
+            where: { x, y in
+                isInsideRoundedRectangleBorder((x, y), rect: rect, cornerRadius: cornerRadius, borderWidth: borderWidth)
             },
             paint: paint
         )
