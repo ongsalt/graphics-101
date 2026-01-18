@@ -83,10 +83,9 @@ struct graphics_101 {
 
         window.show()
 
-
         display.monitorEvents()
         // auto flush?
-        let observer = RunLoopObserver(on: [.beforeWaiting]) { _ in
+        let observationToken = RunLoop.main.observe(on: [.beforeWaiting]) { _ in
             // print("flush")
             display.flush()
         }
@@ -116,7 +115,6 @@ struct graphics_101 {
 
             // let value = window.poolData.load(as: UInt32.self)
             // print(String(value, radix: 16))
-
         }
 
         RunLoop.main.run()

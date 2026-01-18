@@ -1,13 +1,15 @@
 import CoreFoundation
 
+
+// TODO: actully getting CFRunLoop from a RunLoop
 public class RunLoopObserver {
     let observer: CFRunLoopObserver
     let runLoop: CFRunLoop
 
     public init(
         on activities: [CFRunLoopActivity],
-        repeated: Bool = true,
         runLoop: CFRunLoop = CFRunLoopGetCurrent(),
+        repeated: Bool = true,
         priority: Int = 0,
         _ callback: @escaping (CFRunLoopActivity) -> Void
     ) {
@@ -22,12 +24,13 @@ public class RunLoopObserver {
         ) { observer, activity in
             callback(activity)
         }!
-
-        CFRunLoopAddObserver(runLoop, observer, kCFRunLoopDefaultMode)
-
     }
 
-    deinit {
+    public func start() {
+        CFRunLoopAddObserver(runLoop, observer, kCFRunLoopDefaultMode)
+    }
+
+    public func stop() {
         CFRunLoopRemoveObserver(runLoop, observer, kCFRunLoopDefaultMode)
     }
 }
