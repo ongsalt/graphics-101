@@ -15,16 +15,13 @@ public class XDGSurface {
         self.surface = xdg_wm_base_get_xdg_surface(xdgWmBase, waylandSurface.surface)
 
         listener = xdg_surface_listener { data, surface, serial -> Void in
-            Retained<XDGSurface>.run(fromPointer: data!) { this in
-                // print("configure requested")
+            let this = Unmanaged<XDGSurface>.fromOpaque(data!).takeUnretainedValue()
+            this.configure()
 
-                this.configure()
-
-                xdg_surface_ack_configure(this.surface, serial)
-            }
+            xdg_surface_ack_configure(this.surface, serial)
         }
 
-        let this = Retained(self)
-        xdg_surface_add_listener(self.surface, &listener, this.pointer())
+        let this = Unmanaged.passUnretained(self).toOpaque()
+        xdg_surface_add_listener(self.surface, &listener, this)
     }
 }

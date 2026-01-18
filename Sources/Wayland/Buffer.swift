@@ -24,6 +24,14 @@ public class Buffer {
             pool.pool, offset,
             width, height, stride, format.rawValue
         )!
+
+
+        let ptr = Unmanaged.passUnretained(self).toOpaque()
+        var listener = wl_buffer_listener { ptr, _ in
+            let this = Unmanaged<Buffer>.fromOpaque(ptr!).takeUnretainedValue()
+        }
+
+        wl_buffer_add_listener(buffer, &listener, ptr)
     }
 
     func s() {
