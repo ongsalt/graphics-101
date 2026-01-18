@@ -14,21 +14,24 @@ private func isInsideCircle(_ position: (Float, Float), center: (Float, Float), 
     return ((cx - x).squared() + (cy - y).squared()).squareRoot() <= radius
 }
 
+// its not actually distance
+private func distanceFromSuperellipse(
+    _ position: (Float, Float), center: (Float, Float), radius r: Float, degree: Int = 4
+)
+    -> Float
+{
+    let (x, y) = position
+    let (cx, cy) = center
+
+    return pow(abs(cx - x) / r, Float(degree)) + pow(abs(cy - y) / r, Float(degree))
+}
+
 private func isInsideSuperellipse(
     _ position: (Float, Float), center: (Float, Float), radius r: Float, degree: Int = 4
 )
     -> Bool
 {
-    let (x, y) = position
-    let (cx, cy) = center
-
-    // Circle
-    // (cx - x) ^ 2 + (cy - y) ^ 2 = r ^ 2
-    // ((cx - x) / r) ^ 2 + ((cy - y) / r) ^ 2 = 1
-
-    // squircle: change degree to 4?
-
-    return pow((cx - x) / r, Float(degree)) + pow((cy - y) / r, Float(degree)) <= 1
+    return distanceFromSuperellipse(position, center: center, radius: r, degree: degree) <= 1
 }
 
 private func isInsideRoundedRectangle(
@@ -67,19 +70,30 @@ private func isInsideRoundedRectangleBorder(
     let (x, y) = position
     let cr = min(cr, min(r.width, r.height) / 2)
 
-    // there is 4 corner and 2 overlapping rect h and v
+    let w = borderWidth / 2
 
-    if abs(r.left - x) <= borderWidth || abs(r.right - x) <= borderWidth
-        || abs(r.top - y) <= borderWidth || abs(r.bottom - y) <= borderWidth
-    {
-        return true
+    let isLeft = x < r.left + cr
+    let isRight = x > r.right - cr
+    let isTop = y < r.top + cr
+    let isBottom = y > r.bottom - cr
+
+    // Corner Logic
+    if (isLeft || isRight) && (isTop || isBottom) {
+        let centerX = isLeft ? r.left + cr : r.right - cr
+        let centerY = isTop ? r.top + cr : r.bottom - cr
+
+        return isInsideSuperellipse(
+            position, center: (centerX, centerY), radius: cr + w, degree: degree)
+            && !isInsideSuperellipse(
+                position, center: (centerX, centerY), radius: cr - w, degree: degree)
     }
 
-    return false
+    return abs(r.left - x) <= w || abs(r.right - x) <= w
+        || abs(r.top - y) <= w || abs(r.bottom - y) <= w
 }
 
 extension Image {
-    mutating func fillCircle(center: (Float, Float), radius: Float, subpixelCount: Int = 4) {
+    mutating func fillCircle(center: (Float, Float), radius: Float, subpixelCount: Int = 2) {
         let (cx, cy) = center
 
         let x1 = Int(floor(cx - radius))
@@ -117,7 +131,7 @@ extension Image {
 
     mutating func fillShape(
         region: (Int, Int, Int, Int),
-        subpixelCount: Int = 4,
+        subpixelCount: Int = 2,
         where isInside: (Float, Float) -> Bool,
         paint: PaintFn = PAINT_WHITE,
     ) {
@@ -222,11 +236,16 @@ extension Image {
         borderWidth: Float = 1,
         paint: PaintFn = PAINT_WHITE
     ) {
+        let w = borderWidth / 2
         fillShape(
-            region: (Int(rect.left), Int(rect.right), Int(rect.top), Int(rect.bottom)),
+            region: (
+                Int(rect.left - w), Int(rect.right + w),
+                Int(rect.top - w), Int(rect.bottom + w)
+            ),
             subpixelCount: 4,
             where: { x, y in
-                isInsideRoundedRectangleBorder((x, y), rect: rect, cornerRadius: cornerRadius, borderWidth: borderWidth)
+                isInsideRoundedRectangleBorder(
+                    (x, y), rect: rect, cornerRadius: cornerRadius, borderWidth: borderWidth)
             },
             paint: paint
         )

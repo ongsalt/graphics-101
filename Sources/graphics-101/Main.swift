@@ -6,13 +6,14 @@ func createImage(width: Int, height: Int) -> Image {
     var image = Image(width: width, height: height, fill: .transparent)
 
     let padding: Float = 8
-    let bound = Rect(top: padding, left: padding, width: Float(image.width) - padding, height: Float(image.height) - padding)
+    let cornerRadius: Float = 72
+    let bound = Rect(top: padding, left: padding, width: Float(image.width) - 2 * padding, height: Float(image.height) - 2 * padding)
 
     // TODO: set global clip
 
     image.fillRoundedRectangle(
         rect: bound,
-        cornerRadius: 24
+        cornerRadius: cornerRadius
     ) { x, y, _ in
         Color(
             r: Float(x) / Float(width) / 3 + 0.3,
@@ -23,10 +24,10 @@ func createImage(width: Int, height: Int) -> Image {
 
     image.fillRoundedRectangleBorder(
         rect: bound,
-        cornerRadius: 24,
-        borderWidth: 2
-    ) { x, y, _ in
-        Color.red
+        cornerRadius: cornerRadius,
+        borderWidth: 1
+    ) { x, y, below in
+        .red
     }
 
     let center: (Float, Float) = (280, 280)
@@ -112,21 +113,18 @@ struct graphics_101 {
         // _ = consume observer
 
         // Task {
-        // let image = createImage(width: 500, height: 500)
+        //     var i = 0
+        //     while !Task.isCancelled {
+        //         print("[count] \(i) (\(Date.now))")
+        //         i += 1
+        //         try await Task.sleep(for: .seconds(1))
+        //     }
         // }
-        Task {
-            var i = 0
-            while !Task.isCancelled {
-                print("[count] \(i) (\(Date.now))")
-                i += 1
-                try await Task.sleep(for: .seconds(1))
-            }
-        }
 
         Task {
-            print("start \(Date.now)")
+            // print("start \(Date.now)")
             let image = await Task.detached { createImage(width: 640, height: 480) }.value
-            print("end \(Date.now)")
+            // print("end \(Date.now)")
 
             // ideally image.write(to: surface, rect: Rect())
             image.write(to: window.poolData, size: 1000 * 1000 * 4 * 4)  // for now

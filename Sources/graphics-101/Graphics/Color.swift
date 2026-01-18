@@ -4,6 +4,34 @@ struct Color {
     let b: Float
     let a: Float
 
+    init(
+        _ r: Float,
+        _ g: Float,
+        _ b: Float,
+        _ a: Float
+    ) {
+        self.a = a
+        self.r = r
+        self.g = g
+        self.b = b
+    }
+
+   init(
+        r: Float,
+        g: Float,
+        b: Float,
+        a: Float
+    ) {
+        self = .init(r, g, b, a)
+    }
+
+    init(rgba: UInt32) {
+        self.r = Float((rgba >> 24) & 0xFF) / 255.0
+        self.g = Float((rgba >> 16) & 0xFF) / 255.0
+        self.b = Float((rgba >> 8) & 0xFF) / 255.0
+        self.a = Float(rgba & 0xFF) / 255.0
+    }
+
     static let black = Color(r: 0, g: 0, b: 0, a: 1)
     static let white = Color(r: 1, g: 1, b: 1, a: 1)
     static let grey = Color(r: 0.5, g: 0.5, b: 0.5, a: 1)

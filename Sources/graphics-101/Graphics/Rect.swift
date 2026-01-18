@@ -21,4 +21,16 @@ struct Rect {
             height = newValue - bottom
         }
     }
+
+    func padded(_ amount: Float) -> Rect {
+        Rect(
+            top: top + amount, left: left + amount, width: width - 2 * amount,
+            height: height - 2 * amount
+        )
+    }
+
+    func contains(_ position: (Float, Float)) -> Bool {
+        let (x, y) = position
+        return x >= left && x <= left + width && y >= top && y <= top + height
+    }
 }
