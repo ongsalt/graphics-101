@@ -19,7 +19,8 @@ struct Color {
         )
     }
 
-    func toUInt32() -> UInt32 {
+
+    func toARGB8888() -> UInt32 {
         let (r, g, b, a) = toUInt8()
         return (UInt32(r) << (0 * 8)) // 0x12
             | (UInt32(g) << (1 * 8))  // 0x3400

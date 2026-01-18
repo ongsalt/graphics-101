@@ -3,10 +3,12 @@ import FoundationNetworking
 import Wayland
 
 func createImage(width: Int, height: Int) -> Image {
-    var image = Image(width: width, height: height, fill: .grey)
-    image.fillRectangle(
-        rect: Rect(
-            top: 0, left: 0, width: Float(image.width), height: Float(image.height))
+    var image = Image(width: width, height: height, fill: .transparent)
+    
+    // TODO: set global clip
+    image.fillRoundedRectangle(
+        rect: Rect(top: 0, left: 0, width: Float(image.width), height: Float(image.height)),
+        cornerRadius: 24
     ) { x, y, _ in
         Color(
             r: Float(x) / Float(width) / 3 + 0.3,
@@ -16,7 +18,7 @@ func createImage(width: Int, height: Int) -> Image {
     }
 
     let center: (Float, Float) = (280, 280)
-    let radius: Float = 240
+    let radius: Float = 180
     image.fillSuperellipse(center: center, radius: radius, degree: 4) {
         x, y, below in
         Color(
@@ -75,7 +77,10 @@ func shi() async throws {
 struct graphics_101 {
     @MainActor
     static func main() throws {
-        let window = try Window()
+        let display = try Display()
+        let window = Window(display: display)
+
+        window.show()
 
         // Task {
         // let image = createImage(width: 500, height: 500)
@@ -84,33 +89,14 @@ struct graphics_101 {
             let image = createImage(width: 640, height: 480)
             image.write(to: window.poolData, size: 1000 * 1000 * 4 * 4)  // for now
             let value = window.poolData.load(as: UInt32.self)
-            print(String(value, radix: 16))
-        }
+            // print(String(value, radix: 16))
 
-        window.show()
-
-        print("showwed")
-        Task {
-            var i = 0
-            while !Task.isCancelled {
-                print("[count] \(i) (\(Date.now))")
-                i += 1
-                try await Task.sleep(for: .seconds(1))
+            await MainActor.run {
+                window.requestRedraw()
             }
+            // i didnt call surface.update/damage or whatever
         }
 
-        let t = Task {
-            let (data, response) = try await URLSession.shared.data(
-
-                from: URL(string: "https://jsonplaceholder.typicode.com/users/1")!)
-            guard let httpResponse = response as? HTTPURLResponse,
-                httpResponse.statusCode == 200
-            else {
-                throw URLError(.badServerResponse)
-            }
-
-            print(data)
-        }
 
         RunLoop.main.run()
     }

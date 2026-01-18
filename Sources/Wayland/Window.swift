@@ -22,16 +22,15 @@ open class Window {
         pool.poolData
     }
 
-    public init() throws(InitWaylandError) {
-        display = try Display()
+    public init(display: Display, width: Int32 = 640, height: Int32 = 480) {
+        self.display = display
+        self.width = width
+        self.height = height
+
         let registry = display.registry
 
-        width = 640
-        height = 480
-        // let size = width * height * 4 * 4
-
         surface = Surface(compositor: registry.compositor)
-        // let this = TrustMeBro<Window>()
+
         let this = Box<Window?>(nil)
         var onced = false
         xdgSurface = XDGSurface(
@@ -41,9 +40,9 @@ open class Window {
                 let this = this.value!
                 // this api is shit, TODO: fix it
 
-                print("configure requested")
+                // print("configure requested")
                 if !onced {
-                    print("recrreate")
+                    // print("recreate")
                     this.pool.poolData.initializeMemory(
                         as: UInt32.self, repeating: 0xf298_6bff,
                         count: Int(this.width * this.height * 4 / 2))
@@ -64,7 +63,6 @@ open class Window {
         this.value = self
 
         surface.commit()
-        display.roundtrip()
         display.dispatch()
     }
 
@@ -74,9 +72,10 @@ open class Window {
     }
 
     public func requestRedraw() {
-        surface.attach(buffer: buffer)
+        // surface.attach(buffer: buffer)
         surface.damage()
         surface.commit()
+        display.flush()
     }
 
 }

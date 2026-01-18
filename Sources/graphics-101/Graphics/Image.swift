@@ -76,7 +76,7 @@ struct Image {
         // assume color mode to be rgba 1 bytes each
         // cant memcopy because our color is float
         for (offset, pixel) in pixels.enumerated() {
-            buffer[offset] = pixel.toUInt32()
+            buffer[offset] = pixel.toARGB8888()
         }
     }
 

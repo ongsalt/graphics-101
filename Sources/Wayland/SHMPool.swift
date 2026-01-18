@@ -10,7 +10,7 @@ public class SHMPool {
         pool = wl_shm_create_pool(shm.shm, fd, size)!
     }
 
-    public func createBuffer(offset: Int32, width: Int32, height: Int32, stride: Int32, format: wl_shm_format = WL_SHM_FORMAT_XRGB8888)
+    public func createBuffer(offset: Int32, width: Int32, height: Int32, stride: Int32, format: wl_shm_format = WL_SHM_FORMAT_ARGB8888)
         -> Buffer
     {
         Buffer(

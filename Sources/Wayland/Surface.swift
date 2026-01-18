@@ -2,13 +2,23 @@ import CWayland
 
 public class Surface {
     let surface: OpaquePointer
+    private var runLoopObserver: RunLoopObserver? = nil
 
-    public init(compositor: OpaquePointer) {
+    public init(compositor: OpaquePointer, autoCommit: Bool = true) {
         surface = wl_compositor_create_surface(compositor)
+
+        // auto commit ?
+        if autoCommit {
+            runLoopObserver = RunLoopObserver(on: [.beforeWaiting]) { [unowned self] actvity in
+                print("[before idle] commit")
+                wl_surface_commit(self.surface)
+            }
+        }
+
     }
 
     public func attach(buffer: Buffer, x: Int32 = 0, y: Int32 = 0) {
-        wl_surface_attach(surface, buffer.buffer, x, y);
+        wl_surface_attach(surface, buffer.buffer, x, y)
     }
 
     public func damage() {
@@ -16,7 +26,7 @@ public class Surface {
     }
 
     public func damage(x: Int32, y: Int32, width: Int32, height: Int32) {
-        wl_surface_damage(surface, x, y, width, height);
+        wl_surface_damage(surface, x, y, width, height)
     }
 
     public func commit() {
