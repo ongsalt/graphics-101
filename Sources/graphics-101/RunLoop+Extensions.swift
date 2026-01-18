@@ -17,7 +17,7 @@ class RunLoopObservationToken {
 
 extension RunLoop {
     var currentCFRunLoop: CFRunLoop {
-        let _cfRunLoopStorage = Mirror(reflecting: RunLoop.main, ).children.first {
+        let _cfRunLoopStorage = Mirror(reflecting: self).children.first {
             $0.label == "_cfRunLoopStorage"
         }!.value
         let rl = unsafeBitCast(_cfRunLoopStorage, to: CFRunLoop?.self)!
