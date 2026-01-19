@@ -36,7 +36,7 @@ struct graphics_101 {
 
 
         Task { [padding] in
-            let start = ContinuousClock.now
+            // let start = ContinuousClock.now
             let image = await Task.detached { [padding] in
                 createImage(width: width, height: height, padding: Float(padding))
             }.value
@@ -44,19 +44,20 @@ struct graphics_101 {
             // ideally image.write(to: surface, rect: Rect())
             image.write(to: window.currentBuffer.bufferData)  // for now
             window.requestRedraw()
-            let end = ContinuousClock.now
+            // let end = ContinuousClock.now
             // print("Done in \(end - start)")
             // bruh
         }
 
         display.monitorEvents()
         // auto flush?
-        let observationToken = RunLoop.main.observe(on: [.beforeWaiting]) { _ in
+        let token = RunLoop.main.addListener(on: [.beforeWaiting]) { _ in
             // print("flush")
             display.flush()
         }
 
         RunLoop.main.run()
+        _ = consume token
     }
 }
 

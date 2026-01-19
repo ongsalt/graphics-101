@@ -11,6 +11,7 @@ class RunLoopObservationToken {
     }
 
     deinit {
+        // print("[RunLoopObservationToken] Dropped")
         observer.stop()
     }
 }
@@ -24,7 +25,7 @@ extension RunLoop {
         return rl
     }
 
-    func observe(
+    func addListener(
         on activities: [CFRunLoopActivity], repeated: Bool = true, priority: Int = 0,
         _ callback: @escaping (CFRunLoopActivity) -> Void
     ) -> RunLoopObservationToken {
