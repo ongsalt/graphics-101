@@ -203,8 +203,8 @@ extension Image {
         let w = borderWidth / 2
         fillShape(
             region: (
-                Int(rect.left - w), Int(rect.right + w),
-                Int(rect.top - w), Int(rect.bottom + w)
+                Int(floor(rect.left - w)), Int(ceil(rect.right + w)),
+                Int(floor(rect.top - w)), Int(ceil(rect.bottom + w))
             ),
             subpixelCount: 4,
             where: { x, y in

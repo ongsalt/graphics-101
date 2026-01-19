@@ -24,8 +24,8 @@ struct Rect {
 
     func padded(_ amount: Float) -> Rect {
         Rect(
-            top: top + amount, left: left + amount, width: width - 2 * amount,
-            height: height - 2 * amount
+            top: top - amount, left: left - amount, width: width + 2 * amount,
+            height: height + 2 * amount
         )
     }
 

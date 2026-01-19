@@ -38,7 +38,6 @@ open class Window {
             surface: surface,
             configure: { [this] in
                 let this = this.value!
-                print("configure requested")
                 // this api is shit, TODO: fix it
 
                 // rendering

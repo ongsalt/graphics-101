@@ -4,6 +4,9 @@ struct Image {
     var pixels: [Color]
     let width: Int
     let height: Int
+    var rect: Rect {
+        Rect(top: 0, left: 0, width: Float(width), height: Float(height))
+    }
 
     init(width: Int, height: Int, fill fillColor: Color? = nil) {
         self.width = width

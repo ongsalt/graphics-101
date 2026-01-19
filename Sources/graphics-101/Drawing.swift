@@ -1,12 +1,13 @@
 // TODO: reuse image texture
-func createImage(width: Int, height: Int, padding: Float = 8, cornerRadius: Float = 72) -> Image {
-    var image = Image(width: width, height: height, fill: .transparent)
+func createImage(width: Int, height: Int, padding: Float = 24, cornerRadius: Float = 72) -> Image {
+    var image = Image(width: width, height: height, fill: .transparent)  // Color(rgba: 0x0000ff30)
 
-    let bound = Rect(
-        top: padding, left: padding, width: Float(image.width) - 2 * padding,
-        height: Float(image.height) - 2 * padding)
-
+    let bound = image.rect.padded(-padding)
+    let p = Int(padding)
     // TODO: set global clip
+
+    image.drawRoundedRectangleShadow(
+        rect: bound, cornerRadius: cornerRadius / 1.8, color: Color(rgba: 0x0000_0045), blur: 24)
 
     image.fillRoundedRectangle(
         rect: bound,
@@ -20,14 +21,24 @@ func createImage(width: Int, height: Int, padding: Float = 8, cornerRadius: Floa
     }
 
     image.fillRoundedRectangleBorder(
-        rect: bound,
+        rect: bound.padded(-0.5),
         cornerRadius: cornerRadius,
         borderWidth: 1
     ) { x, y, below in
-        .red
+        // Color.black.lerp(over: below, progress: 0.2)
+        Color(rgb: 0x454545).overlay(over: below)
     }
 
-    let center: (Float, Float) = (280, 280)
+    image.fillRoundedRectangleBorder(
+        rect: bound.padded(-1),
+        cornerRadius: cornerRadius,
+        borderWidth: 1
+    ) { x, y, below in
+        // Color.black.lerp(over: below, progress: 0.2)
+        Color(rgb: 0xdedede).overlay(over: below)
+    }
+
+    let center: (Float, Float) = (280 + padding, 280 + padding)
     let radius: Float = 180
     // image.fillSuperellipse(center: center, radius: radius, degree: 4) {
     image.fillRectangle(
@@ -42,7 +53,7 @@ func createImage(width: Int, height: Int, padding: Float = 8, cornerRadius: Floa
             a: 1.0)
     }
 
-    let rect = Rect(top: 24, left: 24, width: 90 * 1.5, height: 195 * 1.5)
+    let rect = Rect(top: 24 + padding, left: 24 + padding, width: 90 * 1.5, height: 195 * 1.5)
     var blurTexture = image.cropped(at: rect)
 
     // box blur look like shit
@@ -60,7 +71,7 @@ func createImage(width: Int, height: Int, padding: Float = 8, cornerRadius: Floa
             .lerp(
                 over:
                     blurTexture
-                    .colorAt(x: x - 24, y: y - 24)
+                    .colorAt(x: x - Int(rect.left), y: y - Int(rect.top))
                     // probably gonna do brighness curve shit
                     .multiply(scalar: 1.7)
             )

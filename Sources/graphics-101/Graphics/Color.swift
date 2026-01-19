@@ -25,6 +25,13 @@ struct Color {
         self = .init(r, g, b, a)
     }
 
+    init(rgb: UInt32) {
+        self.r = Float((rgb >> 16) & 0xFF) / 255.0
+        self.g = Float((rgb >> 8) & 0xFF) / 255.0
+        self.b = Float((rgb >> 0) & 0xFF) / 255.0
+        self.a = 1.0
+    }
+
     init(rgba: UInt32) {
         self.r = Float((rgba >> 24) & 0xFF) / 255.0
         self.g = Float((rgba >> 16) & 0xFF) / 255.0
@@ -59,9 +66,17 @@ struct Color {
 
     // shitty alpha blending
     func lerp(over other: Color, progress p: Float) -> Color {
-        let s = self.multiply(opacity: p)
+        // return s.lerp(over: other)
 
-        return s.lerp(over: other)
+        let effectiveOpacity = self.a * p
+
+        return Color(
+            r: (r * effectiveOpacity + other.r * other.a * (1 - effectiveOpacity)),
+            g: (g * effectiveOpacity + other.g * other.a * (1 - effectiveOpacity)),
+            b: (b * effectiveOpacity + other.b * other.a * (1 - effectiveOpacity)),
+            a: other.a + (1 - other.a) * effectiveOpacity
+        )
+
     }
 
     func lerp(over other: Color) -> Color {
@@ -106,6 +121,10 @@ struct Color {
             b: 1 - (1 - b) * (1 - other.b),
             a: 1 - (1 - a) * (1 - other.a)
         )
+    }
+
+    func overlay(over other: Color) -> Color {
+        other.overlay(self)
     }
 
     func overlay(_ other: Color) -> Color {
