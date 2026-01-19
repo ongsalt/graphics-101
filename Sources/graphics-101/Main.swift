@@ -1,54 +1,17 @@
+import CVulkan
 import Foundation
 import FoundationNetworking
 import Wayland
-import CVulkan
 
 @main
-struct graphics_101 {
-    @MainActor
+struct Graphics101 {
     static func main() throws {
+        let instance = Graphics101()
+        try instance.run()
+    }
+
+    func run() throws {
         let display = try Display()
-
-        let padding = 24
-        let width = 640 + 2 * padding
-        let height = 480 + 2 * padding
-
-        let shm = SharedMemoryBuffer(
-            shm: display.registry.sharedMemoryBuffer)
-        let pool = shm.createPool(size: Int32(width * height * 4 * 4))
-
-        let window = Window(display: display, pool: pool, width: Int32(width), height: Int32(height))
-        window.show()
-
-        // vkCreateInstance(UnsafePointer<VkInstanceCreateInfo>!, UnsafePointer<VkAllocationCallbacks>!, UnsafeMutablePointer<VkInstance?>!)
-
-        // launchCounter()
-
-        // _ = consume observer
-
-        // window.surface.onFrame(runImmediately: true) {
-        //     // print("called")
-        //     padding += 1
-
-
-
-
-
-
-        Task { [padding] in
-            // let start = ContinuousClock.now
-            let image = await Task.detached { [padding] in
-                createImage(width: width, height: height, padding: Float(padding))
-            }.value
-
-            // ideally image.write(to: surface, rect: Rect())
-            image.write(to: window.currentBuffer.bufferData)  // for now
-            window.requestRedraw()
-            // let end = ContinuousClock.now
-            // print("Done in \(end - start)")
-            // bruh
-        }
-
         display.monitorEvents()
         // auto flush?
         let token = RunLoop.main.addListener(on: [.beforeWaiting]) { _ in
@@ -56,9 +19,14 @@ struct graphics_101 {
             display.flush()
         }
 
+        let window = RawWindow(display: display, title: "yomama")
+        window.show()
+
+
+        let state = VulkanState()
+        
+
         RunLoop.main.run()
         _ = consume token
     }
 }
-
-

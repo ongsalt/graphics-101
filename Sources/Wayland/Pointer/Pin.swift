@@ -1,5 +1,8 @@
 public class Pin<T> {
     public let ptr: UnsafeMutablePointer<T>
+    public var readonly: UnsafePointer<T> {
+        UnsafePointer(ptr)
+    }
     public let opaque: OpaquePointer
 
     public init(_ value: T) {
@@ -18,10 +21,9 @@ public class Pin<T> {
         }
     }
 
-
     // lmao
     public func immortalize() {
-        Unmanaged.passRetained(self).retain().retain()
+        Unmanaged.passRetained(self)
     }
  
     deinit {

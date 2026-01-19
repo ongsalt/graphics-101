@@ -44,8 +44,6 @@ open class Window {
             }
         )
         
-
-
         xdgTopLevel = XDGTopLevel(surface: xdgSurface)
         xdgTopLevel.title = "Asd"
 
