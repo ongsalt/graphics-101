@@ -56,11 +56,14 @@ func createImage(width: Int, height: Int, padding: Float = 8, cornerRadius: Floa
     image.fillRoundedRectangle(rect: rect, cornerRadius: 48) { x, y, below in
         // below.overlay(.white)
         // below.multiply(scalar: 2)
-        blurTexture
-            .colorAt(x: x - 24, y: y - 24)
-            // probably gonna do brighness curve shit
-            .multiply(scalar: 1.7)
-            .lerp(Color(r: 0.7, g: 0.7, b: 0.7, a: 1.0), progress: 0.3)
+        Color(r: 0.7, g: 0.7, b: 0.7, a: 0.7)
+            .lerp(
+                over:
+                    blurTexture
+                    .colorAt(x: x - 24, y: y - 24)
+                    // probably gonna do brighness curve shit
+                    .multiply(scalar: 1.7)
+            )
     }
 
     return image

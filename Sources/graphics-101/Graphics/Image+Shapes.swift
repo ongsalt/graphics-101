@@ -93,42 +93,6 @@ private func isInsideRoundedRectangleBorder(
 }
 
 extension Image {
-    mutating func fillCircle(center: (Float, Float), radius: Float, subpixelCount: Int = 2) {
-        let (cx, cy) = center
-
-        let x1 = Int(floor(cx - radius))
-        let x2 = Int(ceil(cx + radius))
-        let y1 = Int(floor(cy - radius))
-        let y2 = Int(ceil(cy + radius))
-
-        for x: Int in x1...x2 {
-            for y: Int in y1...y2 {
-                var covered = 0
-
-                for sx in 0..<subpixelCount {
-                    for sy in 0..<subpixelCount {
-                        let x = Float(x) + (Float(sx) + 0.5) / Float(subpixelCount)
-                        let y = Float(y) + (Float(sy) + 0.5) / Float(subpixelCount)
-
-                        if isInsideCircle((x, y), center: center, radius: radius) {
-                            covered += 1
-                        }
-                    }
-                }
-
-                let p = Float(covered) / Float(subpixelCount * subpixelCount)
-                if p == 0 {
-                    continue
-                }
-
-                let index = getPixelIndex(x: x, y: y)
-                let existingColor = pixels[index]
-
-                self.pixels[index] = .white.lerp(existingColor, progress: p)
-            }
-        }
-    }
-
     mutating func fillShape(
         region: (Int, Int, Int, Int),
         subpixelCount: Int = 2,
@@ -160,7 +124,7 @@ extension Image {
                 let index = getPixelIndex(x: x, y: y)
                 let existingColor = pixels[index]
 
-                self.pixels[index] = paint(x, y, existingColor).lerp(existingColor, progress: p)
+                self.pixels[index] = paint(x, y, existingColor).lerp(over: existingColor, progress: p)
             }
         }
     }

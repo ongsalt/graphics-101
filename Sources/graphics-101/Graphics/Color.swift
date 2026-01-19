@@ -16,7 +16,7 @@ struct Color {
         self.b = b
     }
 
-   init(
+    init(
         r: Float,
         g: Float,
         b: Float,
@@ -58,11 +58,28 @@ struct Color {
     }
 
     // shitty alpha blending
-    func lerp(_ other: Color, progress p: Float) -> Color {
-        let p2 = 1 - p
+    func lerp(over other: Color, progress p: Float) -> Color {
+        let s = self.multiply(opacity: p)
+
+        return s.lerp(over: other)
+    }
+
+    func lerp(over other: Color) -> Color {
+        // 0.6 + 0.6 != 1.2
+        // its 1 - 0.16 = 0.84
+        // a $ b = a + (1 - a)b
+        let ia = 1 - a
+        let outputA = ia * other.a + a
         return Color(
-            r: r * p + other.r * p2, g: g * p + other.g * p2, b: b * p + other.b * p2,
-            a: a * p + other.a * p2)
+            r: (r * a + ia * other.r * other.a) / outputA,
+            g: (g * a + ia * other.g * other.a) / outputA,
+            b: (b * a + ia * other.b * other.a) / outputA,
+            a: outputA
+        )
+    }
+
+    func mutiply(over other: Color) -> Color {
+        other.mutiply(self)
     }
 
     func mutiply(_ other: Color) -> Color {
@@ -76,6 +93,10 @@ struct Color {
 
     func multiply(scalar mutiplier: Float) -> Color {
         Color(r: mutiplier * r, g: mutiplier * g, b: mutiplier * b, a: a)
+    }
+
+    func multiply(opacity: Float) -> Color {
+        Color(r: r, g: g, b: b, a: a * opacity)
     }
 
     func screen(_ other: Color) -> Color {

@@ -5,6 +5,9 @@ import PackageDescription
 
 let package = Package(
     name: "graphics-101",
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-numerics", from: "1.0.0")
+    ],
     targets: [
         .target(name: "CWayland"),
         .systemLibrary(name: "CVulkan", pkgConfig: "vulkan"),
@@ -13,7 +16,11 @@ let package = Package(
         // Targets can depend on other targets in this package and products from dependencies.
         .executableTarget(
             name: "graphics-101",
-            dependencies: ["Wayland", "CVulkan"],
+            dependencies: [
+                .product(name: "Numerics", package: "swift-numerics"),
+                "Wayland", 
+                "CVulkan", 
+            ],
             swiftSettings: [
                 // .interoperabilityMode(.Cxx)
             ]

@@ -11,3 +11,20 @@ extension Comparable {
     }
 }
 
+extension SIMD2 where Scalar: FloatingPoint {
+    var lenght: Scalar {
+        (x.squared() + y.squared()).squareRoot()
+    }
+}
+
+extension SIMD2 where Scalar: SignedNumeric, Scalar: Comparable {
+    func abs() -> Self {
+        .init(Swift.abs(x), Swift.abs(y))
+    }
+}
+
+extension SIMD3 where Scalar: FloatingPoint {
+    var lenght: Scalar {
+        (x.squared() + y.squared() + z.squared()).squareRoot()
+    }
+}
