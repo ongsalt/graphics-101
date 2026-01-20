@@ -1,6 +1,7 @@
 import Foundation
 
-public final class CStringArray {
+public final class CStringArray: @unchecked Sendable {
+    let strings: [String]
     // We store the pointer array itself
     private let buffer: UnsafeMutableBufferPointer<UnsafePointer<CChar>?>
 
@@ -14,6 +15,7 @@ public final class CStringArray {
     }
 
     public init(_ strings: [String]) {
+        self.strings = strings
         // Allocate the array of pointers
         self.buffer = .allocate(capacity: strings.count)
 
@@ -43,5 +45,13 @@ public final class CStringArray {
         }
         // 2. Free the array of pointers
         buffer.deallocate()
+    }
+}
+
+extension CStringArray: ExpressibleByArrayLiteral {
+    public typealias ArrayLiteralElement = String
+
+    public convenience init(arrayLiteral elements: String...) {
+        self.init(elements)    
     }
 }

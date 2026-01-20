@@ -58,7 +58,7 @@ nonisolated(unsafe) var listener = wl_registry_listener(
 
 public class Display: @unchecked Sendable {
     public private(set) var registry: Registry
-    let display: OpaquePointer
+    public let display: OpaquePointer
     let fd: Int32
 
     private var source: (any DispatchSourceRead)? = nil
