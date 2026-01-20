@@ -19,14 +19,46 @@ class Text: SomeUI {
     // should be called setup(context: inout ComponentContext)
     func run(runtime context: ComponentContext) {
         let node = ActualNode()
-        context.addNode(node)
+        context.currentNode.addChildren(node)
 
+        // context.effect { ... }
         let effect = Effect {
             print("changed/setup \(self.text.value)")
         }
 
         context.onDestroy {
             effect.destroy()
+
+            // or should this be auto
+            context.removeNode(node)
+        }
+    }
+}
+
+class BoxNode<Children: SomeUI>: SomeUI {
+    private let children: ReadOnlyBinding<() -> Children>
+
+    convenience init(_ children: @autoclosure @escaping () -> () -> Children) {
+        self.init(ReadOnlyBinding(getter: children))
+    }
+
+    init(_ children: Bind<() -> Children>) {
+        self.children = children
+    }
+
+    // should be called setup(context: inout ComponentContext)
+    func run(runtime context: ComponentContext) {
+        let node = ActualNode()
+        let parent = context.currentNode
+        parent.addChildren(self)
+
+        context.startScope(currentNode: node) { runtime in
+            children.value()
+        }
+
+        context.onDestroy {
+            // or should this be auto
+            parent.removeNode(node)
         }
     }
 }

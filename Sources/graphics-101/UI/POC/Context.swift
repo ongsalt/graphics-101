@@ -6,32 +6,49 @@
 class ComponentContext {
     nonisolated(unsafe) static var current: ComponentContext? = nil
 
-    let parent: ComponentContext? = nil
+    unowned let parent: ComponentContext? = nil
+    // it should own its children
+    var childContexts: [ComponentContext] = []
     var environment: Environment
 
-    var emittedNodes: [ActualNode] = []
+    var currentNode: ActualNode
 
-    init(parent: ComponentContext? = nil) {
+    init(parent: ComponentContext? = nil, currentNode: ActualNode? = nil) {
         self.environment = Environment(parent: parent?.environment)
         self.parent = parent
         environment.push(self)
+
+        self.currentNode = currentNode ?? parent!.currentNode
     }
 
-    private func startScope<T>(_ scope: (ComponentContext) -> T) -> T {
-        let childContext = ComponentContext(parent: self)
+    private func createChild(currentNode: ActualNode? = nil) -> ComponentContext {
+        let childContext = ComponentContext(parent: self, currentNode: currentNode)
+        childContexts.append(childContext)
+
+        return childContext
+    }
+
+    func startScope(
+        currentNode: ActualNode? = nil,
+        scope: (ComponentContext) -> some SomeUI
+    ) {
+        let childContext = createChild(currentNode: currentNode)
         // TODO: fix this
         let previous = ComponentContext.current
         ComponentContext.current = self
-        let ret = scope(childContext)
+
+        let setupUi = scope(childContext)
+        setupUi.run(runtime: childContext)
+
         ComponentContext.current = previous
         // TODO: how to drop it tho
-        return ret
     }
 
-    func startComponent(_ block: () -> some SomeUI) {
-        startScope { runtime in
-            let setupUi = block()
-            setupUi.run(runtime: runtime)
+    func startComponent(
+        scope: () -> some SomeUI
+    ) {
+        startScope { context in
+            scope()
         }
     }
 
@@ -55,5 +72,11 @@ class ComponentContext {
         _ condition: @escaping () -> [Item], item: @escaping () -> Void
     ) {
 
+    }
+
+    func destroy() {
+        for child in self.childContexts {
+            child.destroy()
+        }
     }
 }
