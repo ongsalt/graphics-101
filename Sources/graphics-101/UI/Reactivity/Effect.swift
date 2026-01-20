@@ -30,6 +30,7 @@ public final class Effect: @unchecked Sendable {
         withObservationTracking {
             self.fn()
         } didSet: { [weak self] tracking in
+            // if tracking.changed did not contain stuff outside of ignored scope then just pretend nothing happen
             tracking.cancel()
 
             // switch back to current thread somehow

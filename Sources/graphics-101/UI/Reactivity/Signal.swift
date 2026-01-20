@@ -9,7 +9,11 @@ public final class Signal<T>: Source {
         self.value = value
     }
 
-    func toReadOnly() -> ReadOnlySignal<T> {
-        Computed { self.value }
+    func toReadOnly() -> ReadOnlyBinding<T> {
+        ReadOnlyBinding(self.value)
+    }
+
+    deinit {
+        print("Deinit Signal: \(value)")
     }
 }

@@ -45,5 +45,3 @@ public class Computed<T>: EffectScope, Source, Subscriber {
 }
 
 
-
-typealias ReadOnlySignal<T> = Computed<T>
