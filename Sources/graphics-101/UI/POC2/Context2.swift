@@ -39,7 +39,7 @@ class FCRender<PlatformNode: AnyObject>: UI2 {
 }
 
 class FCBuilder<PlatformNode: AnyObject> {
-    public func startComponent() {
+    public func startComponent(block: () -> Void) {
         
     }
 

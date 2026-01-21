@@ -1,4 +1,5 @@
-class Text2: UI2 {
+class Text2<PlatformNode: AnyObject>: UI2 {
+
     private let text: ReadOnlyBinding<String>
 
     convenience init(_ text: @autoclosure @escaping () -> String) {
@@ -10,20 +11,20 @@ class Text2: UI2 {
     }
 
     // should be called setup(context: inout ComponentContext)
-    func setupWidget(context: Context2) {
-        let node = ActualNode()
-        context.currentNode.children.append(node)
+    func setupWidget(context: Context2<PlatformNode>) {
+        // let node = ActualNode()
+        // context.currentNode.children.append(node)
 
         // context.effect { ... }
         let effect = Effect {
             print("changed/setup \(self.text.value)")
         }
 
-        context.onDestroy {
-            effect.destroy()
+        // context.onDestroy {
+        //     effect.destroy()
 
-            // or should this be auto
-            node.remove()
-        }
+        //     // or should this be auto
+        //     node.remove()
+        // }
     }
 }
