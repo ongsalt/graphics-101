@@ -38,7 +38,7 @@ class ComponentContext {
         ComponentContext.current = self
 
         let setupUi = scope(childContext)
-        setupUi.run(runtime: childContext)
+        setupUi.run(context: childContext)
 
         ComponentContext.current = previous
         // TODO: how to drop it tho
@@ -56,7 +56,7 @@ class ComponentContext {
         _ condition: @escaping () -> Bool, then: @escaping () -> Void,
         else _else: (() -> Void)? = nil
     ) {
-        let condition = Computed(tags: ["runtime"], condition)
+        let condition = Computed(tags: ["context"], condition)
 
         // Effect {
         //     if condition.value {
@@ -78,5 +78,9 @@ class ComponentContext {
         for child in self.childContexts {
             child.destroy()
         }
+    }
+
+    deinit {
+        destroy()
     }
 }

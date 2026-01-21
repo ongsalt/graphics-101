@@ -17,3 +17,4 @@ wayland-scanner client-header < /usr/share/wayland-protocols/staging/xdg-topleve
 
 ## TODO
 - clip
+- stop using Observation framework becuase no untrack

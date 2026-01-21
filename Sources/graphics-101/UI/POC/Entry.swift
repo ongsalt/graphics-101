@@ -17,9 +17,9 @@ class Text: SomeUI {
     }
 
     // should be called setup(context: inout ComponentContext)
-    func run(runtime context: ComponentContext) {
+    func run(context: ComponentContext) {
         let node = ActualNode()
-        context.currentNode.addChildren(node)
+        context.currentNode.children.append(node)
 
         // context.effect { ... }
         let effect = Effect {
@@ -30,7 +30,7 @@ class Text: SomeUI {
             effect.destroy()
 
             // or should this be auto
-            context.removeNode(node)
+            node.remove()
         }
     }
 }
@@ -47,19 +47,19 @@ class BoxNode<Children: SomeUI>: SomeUI {
     }
 
     // should be called setup(context: inout ComponentContext)
-    func run(runtime context: ComponentContext) {
+    func run(context: ComponentContext) {
         let node = ActualNode()
         let parent = context.currentNode
         parent.addChildren(self)
 
-        context.startScope(currentNode: node) { runtime in
+        context.startScope(currentNode: node) { context in
             children.value()
         }
 
-        context.onDestroy {
-            // or should this be auto
-            parent.removeNode(node)
-        }
+        // context.onDestroy {
+        //     // or should this be auto
+        //     parent.removeNode(node)
+        // }
     }
 }
 
@@ -70,28 +70,36 @@ func Counter(props: @autoclosure @escaping () -> Int) -> some SomeUI {
 func Counter(props: Bind<Int>) -> some SomeUI {
     let count = Signal(0)
 
-    return ComponentUI { runtime in
-        runtime.startComponent {
+    return ComponentUI { context in
+        context.startComponent {
             Text("props: \(props)")
         }
 
-        runtime.startComponent {
+        context.startComponent {
             Text("count: \(count)")
         }
     }
 }
 
+// func Counter(props: Bind<Int>) -> some SomeUI {
+//     let count = Signal(0)
+//     return #ui
+//         Text("props: \(props)")
+//         Text("count: \(count)")
+//     }
+// }
+
 func CounterWrapper() -> some SomeUI {
     let props = Signal(12)
     let show = Signal(true)
 
-    return ComponentUI { runtime in
+    return ComponentUI { context in
         // Counter(props: 0)
-        runtime.startComponent {
+        context.startComponent {
             Counter(props: props.toReadOnly())
         }
 
-        // runtime.startIf {
+        // context.startIf {
         //     show.value
         // } then: {
         //     Text("Show")
@@ -100,9 +108,9 @@ func CounterWrapper() -> some SomeUI {
 }
 
 func runUi() {
-    let ui = CounterWrapper()
+    let runtime = Runtime()
 
-    let runtime = ComponentContext()
-
-    ui.run(runtime: runtime)
+    runtime.runComponent {
+        CounterWrapper()
+    }
 }

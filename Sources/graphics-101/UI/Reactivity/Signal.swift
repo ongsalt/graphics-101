@@ -9,6 +9,10 @@ public final class Signal<T>: Source {
         self.value = value
     }
 
+    public func update(map: (T) -> T) {
+        self.value = map(self.value)
+    }
+
     func toReadOnly() -> ReadOnlyBinding<T> {
         ReadOnlyBinding(self.value)
     }
