@@ -1,0 +1,3 @@
+module CVMA {
+    header "vk_mem_alloc.h"
+}

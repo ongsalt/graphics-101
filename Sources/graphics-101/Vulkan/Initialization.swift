@@ -1,5 +1,5 @@
 @preconcurrency import CVolk
-// @preconcurrency import CVMA
+@preconcurrency import CVMA
 import Glibc
 import Wayland
 
@@ -234,7 +234,10 @@ private func createLogicalDevice(families: SelectedQueuesIndices, physicalDevice
 }
 
 func createVMA() {
-
+    // print(shit())
+    // let vkFns = Pin(leaking: VmaVulkanFunctions(
+        
+    // ))
 }
 
 class VulkanState {

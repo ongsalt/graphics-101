@@ -12,6 +12,11 @@ public class Pin<T> {
         opaque = OpaquePointer(ptr)
     }
 
+    public convenience init(leaking value: T) {
+        self.init(value)
+        self.leak()
+    }
+
     public var pointee: T {
         get {
             ptr.pointee
