@@ -232,7 +232,7 @@ private func createLogicalDevice(families: SelectedQueuesIndices, physicalDevice
     )
 }
 
-func createVMA(
+private func createVMA(
     instance: VkInstance,
     physicalDevice: VkPhysicalDevice,
     logicalDevice: VkDevice,
@@ -245,7 +245,9 @@ func createVMA(
     allocatorCreateInfo[].flags =
         VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT.rawValue
         | VMA_ALLOCATOR_CREATE_EXT_MEMORY_PRIORITY_BIT.rawValue
-        | VMA_ALLOCATOR_CREATE_KHR_EXTERNAL_MEMORY_WIN32_BIT.rawValue
+    #if os(Windows)
+        allocatorCreateInfo[].flags |= VMA_ALLOCATOR_CREATE_KHR_EXTERNAL_MEMORY_WIN32_BIT.rawValue
+    #endif
 
     let vulkanFunctions = Pin(VmaVulkanFunctions())
     vmaImportVulkanFunctionsFromVolk(allocatorCreateInfo.ptr, vulkanFunctions.ptr)
@@ -254,8 +256,8 @@ func createVMA(
 
     var allocator: VmaAllocator? = VmaAllocator(bitPattern: 0)
     let res = vmaCreateAllocator(allocatorCreateInfo.ptr, &allocator)
-    if res.rawValue != 0 {
-        print("createVMA: \(res)")
+    guard res.rawValue == 0 else {
+        fatalError("createVMA failed with result: \(res)")
     }
 
     return allocator!
@@ -271,6 +273,8 @@ class VulkanState {
     let graphicsQueue: VkQueue
     let presentQueue: VkQueue
 
+    let allocator: VmaAllocator
+
     init(waylandDisplay: Display, waylandSurface: Surface) {
         instance = createInstance()
         surface = createWaylandSurface(
@@ -284,6 +288,9 @@ class VulkanState {
         self.graphicsQueue = c.graphicsQueue
         self.presentQueue = c.presentQueue
         self.device = c.device
+
+        allocator = createVMA(
+            instance: instance, physicalDevice: physicalDevice, logicalDevice: device)
 
     }
 
