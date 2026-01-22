@@ -14,3 +14,11 @@ public func createZeroedStruct<T>(of: T.Type) -> T {
 
     return ptr.pointee
 }
+
+
+public func expect<T>(_ value: T?, _ message: String) -> T {
+    if value == nil {
+        fatalError(message)
+    }
+    return value!
+}

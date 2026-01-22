@@ -20,6 +20,29 @@ extension VkBool32 {
     }
 }
 
+extension VkResult {
+    func isOk() -> Bool {
+        self == VK_SUCCESS
+    }
+
+    func expect(_ message: String) {
+        if self != VK_SUCCESS {
+            fatalError("\(message), code: \(self.rawValue)")
+        }
+    }
+
+    func unwrap() {
+        expect("unwrap failed")
+    }
+
+    func unwrapOrElse<E>(_ block: () throws(E) -> Void) throws(E) {
+        if self != VK_SUCCESS {
+            try block()
+        }
+    }
+
+}
+
 struct Vulkan {
     static func makeVersion(major: UInt32, minor: UInt32, patch: UInt32) -> UInt32 {
         return (major << 22) | (minor << 12) | patch

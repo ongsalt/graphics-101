@@ -5,6 +5,10 @@ extension Numeric {
 }
 
 extension Comparable {
+    func clamp(to range: ClosedRange<Self>) -> Self {
+        clamp(range.lowerBound, range.upperBound)
+    }
+
     func clamp(_ from: Self, _ to: Self) -> Self {
         max(from, min(self, to))
     }
