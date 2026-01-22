@@ -3,10 +3,13 @@
 
 import PackageDescription
 
+let vulkanWaylandSetting: CSetting = .define(
+    "VK_USE_PLATFORM_WAYLAND_KHR", .when(platforms: [.linux]))
+
 let package = Package(
     name: "graphics-101",
     dependencies: [
-        .package(url: "https://github.com/apple/swift-numerics", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-numerics", from: "1.0.0")
     ],
     targets: [
         .target(name: "CWayland"),
@@ -22,18 +25,23 @@ let package = Package(
 
         .target(
             name: "CVolk",
+            cSettings: [
+                vulkanWaylandSetting
+            ],
+            swiftSettings: [],
         ),
 
         .executableTarget(
             name: "graphics-101",
             dependencies: [
                 .product(name: "Numerics", package: "swift-numerics"),
-                "Wayland",
+                .target(name: "Wayland", condition: .when(platforms: [.linux])),
                 "CVMA",
                 "CVolk",
             ],
-            swiftSettings: [
-            ]
+            cSettings: [
+                vulkanWaylandSetting
+            ],
         ),
     ]
 )
