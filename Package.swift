@@ -5,11 +5,6 @@ import PackageDescription
 
 let volkCDefine: [CSetting] = [
     .define("VK_USE_PLATFORM_WAYLAND_KHR", .when(platforms: [.linux])),
-    // .define("VOLK_IMPLEMENTATION"),
-    .define("VK_VERSION_1_0"),
-    .define("VK_VERSION_1_1"),
-    .define("VK_VERSION_1_2"),
-    .define("VK_VERSION_1_3"),
 ]
 
 let package = Package(
