@@ -3,14 +3,6 @@
 
 import PackageDescription
 
-let volkCDefine: [CSetting] = [
-    .define("VK_USE_PLATFORM_WAYLAND_KHR", .when(platforms: [.linux])),
-]
-
-let vmaCDefine: [CSetting] = [
-    .define("VK_NO_PROTOTYPES")
-]
-
 let package = Package(
     name: "graphics-101",
     dependencies: [
@@ -28,12 +20,10 @@ let package = Package(
 
         .target(
             name: "CVMA",
-            cSettings: vmaCDefine,
-        ),
-
-        .target(
-            name: "CVolk",
-            cSettings: [] + volkCDefine,
+            cSettings: [
+                .define("VK_USE_PLATFORM_WAYLAND_KHR", .when(platforms: [.linux])),
+                // i should fucking put these 2 together
+            ],
         ),
 
         .executableTarget(
@@ -41,10 +31,12 @@ let package = Package(
             dependencies: [
                 .product(name: "Numerics", package: "swift-numerics"),
                 .target(name: "Wayland", condition: .when(platforms: [.linux])),
-                "CVolk",
                 "CVMA",
             ],
-            cSettings: [] + volkCDefine + vmaCDefine,
+            cSettings: [
+                .define("VK_USE_PLATFORM_WAYLAND_KHR", .when(platforms: [.linux]))
+
+            ],
         ),
     ]
 )

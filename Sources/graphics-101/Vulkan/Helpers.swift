@@ -1,4 +1,4 @@
-@preconcurrency import CVolk
+@preconcurrency import CVMA
 
 extension VkBool32: @retroactive ExpressibleByBooleanLiteral {
     public init(booleanLiteral value: Bool) {
@@ -31,6 +31,7 @@ struct Vulkan {
 
     static let apiVersion1_0 = makeApiVersion(variant: 0, major: 1, minor: 0, patch: 0)
     static let apiVersion1_3 = makeApiVersion(variant: 0, major: 1, minor: 3, patch: 0)
+    static let apiVersion = apiVersion1_3
 
     nonisolated static func printAvailableExtension() {
         var count: UInt32 = 0

@@ -17,6 +17,10 @@ public class Pin<T> {
         self.leak()
     }
 
+    public convenience init(zeroedStructOf type: T.Type) {
+        self.init(createZeroedStruct(of: type))
+    }
+
     public var pointee: T {
         get {
             ptr.pointee

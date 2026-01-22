@@ -1,4 +1,3 @@
-@preconcurrency import CVolk
 @preconcurrency import CVMA
 import Glibc
 import Wayland
@@ -35,7 +34,7 @@ private func createInstance() -> VkInstance {
             applicationVersion: Vulkan.makeVersion(major: 1, minor: 0, patch: 0),
             pEngineName: "yomum engine".persist(),
             engineVersion: Vulkan.makeVersion(major: 1, minor: 0, patch: 0),
-            apiVersion: Vulkan.apiVersion1_3
+            apiVersion: Vulkan.apiVersion
         )
     )
 
@@ -233,11 +232,33 @@ private func createLogicalDevice(families: SelectedQueuesIndices, physicalDevice
     )
 }
 
-func createVMA() {
-    // print(shit())
-    // let vkFns = Pin(leaking: VmaVulkanFunctions(
-        
-    // ))
+func createVMA(
+    instance: VkInstance,
+    physicalDevice: VkPhysicalDevice,
+    logicalDevice: VkDevice,
+) -> VmaAllocator {
+    let allocatorCreateInfo = Pin(createZeroedStruct(of: VmaAllocatorCreateInfo.self))
+    allocatorCreateInfo[].physicalDevice = physicalDevice
+    allocatorCreateInfo[].device = logicalDevice
+    allocatorCreateInfo[].instance = instance
+    allocatorCreateInfo[].vulkanApiVersion = Vulkan.apiVersion
+    allocatorCreateInfo[].flags =
+        VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT.rawValue
+        | VMA_ALLOCATOR_CREATE_EXT_MEMORY_PRIORITY_BIT.rawValue
+        | VMA_ALLOCATOR_CREATE_KHR_EXTERNAL_MEMORY_WIN32_BIT.rawValue
+
+    let vulkanFunctions = Pin(VmaVulkanFunctions())
+    vmaImportVulkanFunctionsFromVolk(allocatorCreateInfo.ptr, vulkanFunctions.ptr)
+
+    allocatorCreateInfo[].pVulkanFunctions = vulkanFunctions.readonly
+
+    var allocator: VmaAllocator? = VmaAllocator(bitPattern: 0)
+    let res = vmaCreateAllocator(allocatorCreateInfo.ptr, &allocator)
+    if res.rawValue != 0 {
+        print("createVMA: \(res)")
+    }
+
+    return allocator!
 }
 
 class VulkanState {
