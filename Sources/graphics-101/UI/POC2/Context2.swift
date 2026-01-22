@@ -48,7 +48,8 @@ class FCBuilder<PlatformNode: AnyObject> {
     }
 }
 
-class Context2<PlatformNode: AnyObject> {
+final class Context2<PlatformNode: AnyObject> {
+    private unowned let parent: Context2<PlatformNode>? = nil 
     private let associatedComponent: (any UI2)? = nil
 
     fileprivate func isContainer() {

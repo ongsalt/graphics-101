@@ -6,23 +6,33 @@ import PackageDescription
 let package = Package(
     name: "graphics-101",
     dependencies: [
-        .package(url: "https://github.com/apple/swift-numerics", from: "1.0.0")
+        .package(url: "https://github.com/apple/swift-numerics", from: "1.0.0"),
     ],
     targets: [
         .target(name: "CWayland"),
-        .systemLibrary(name: "CVulkan", pkgConfig: "vulkan"),
-        .target(name: "Wayland", dependencies: ["CWayland"]),
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
+        .target(
+            name: "Wayland",
+            dependencies: ["CWayland"],
+            swiftSettings: [
+                .interoperabilityMode(.C)
+            ]
+        ),
+
+        .target(name: "CVMA"),
+
+        .target(
+            name: "CVolk",
+        ),
+
         .executableTarget(
             name: "graphics-101",
             dependencies: [
                 .product(name: "Numerics", package: "swift-numerics"),
-                "Wayland", 
-                "CVulkan", 
+                "Wayland",
+                "CVMA",
+                "CVolk",
             ],
             swiftSettings: [
-                // .interoperabilityMode(.Cxx)
             ]
         ),
     ]
