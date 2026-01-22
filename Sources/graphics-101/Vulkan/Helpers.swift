@@ -1,12 +1,14 @@
 @preconcurrency import CVMA
+import Wayland
 
 extension VkBool32: @retroactive ExpressibleByBooleanLiteral {
     public init(booleanLiteral value: Bool) {
-        self = if value {
-            1
-        } else {
-            0
-        }
+        self =
+            if value {
+                1
+            } else {
+                0
+            }
     }
 
     public typealias BooleanLiteralType = Bool
@@ -32,6 +34,28 @@ struct Vulkan {
     static let apiVersion1_0 = makeApiVersion(variant: 0, major: 1, minor: 0, patch: 0)
     static let apiVersion1_3 = makeApiVersion(variant: 0, major: 1, minor: 3, patch: 0)
     static let apiVersion = apiVersion1_3
+
+    static func getArray<T>(
+        default defaultValue: T,
+        _ fn: (UnsafeMutablePointer<UInt32>, UnsafeMutablePointer<T>?) -> VkResult
+    )
+        -> [T]
+    {
+        var count: UInt32 = 0
+        var array: [T] = []
+        fn(&count, nil)
+
+        array = Array(repeating: defaultValue, count: Int(count))
+        fn(&count, &array)
+
+        return array
+    }
+
+    static func getArray<T>(
+        of: T.Type, _ fn: (UnsafeMutablePointer<UInt32>, UnsafeMutablePointer<T>?) -> VkResult
+    ) -> [T] {
+        return getArray(default: createZeroedStruct(of: T.self), fn)
+    }
 
     nonisolated static func printAvailableExtension() {
         var count: UInt32 = 0
@@ -68,19 +92,18 @@ struct SwapChainSupportDetails {
     let formats: [VkSurfaceFormatKHR]
     let presentModes: [VkPresentModeKHR]
 
-    init(querying device: VkDevice, surface: VkSurfaceKHR) {
+    init(physicalDevice device: VkPhysicalDevice, surface: VkSurfaceKHR) {
         var capabilities = VkSurfaceCapabilitiesKHR()
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &capabilities)
 
-        var formatCount: UInt32 = 0
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nil)
-        var formats = Array(repeating: VkSurfaceFormatKHR(), count: Int(formatCount))
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, nil, &formats)
+        let formats = Vulkan.getArray(of: VkSurfaceFormatKHR.self) { count, arr in
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, count, arr)
+        }
 
-        var presentModesCounts: UInt32 = 0
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModesCounts, nil)
-        var presentModes = Array(repeating: VkPresentModeKHR(0), count: Int(presentModesCounts))
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, nil, &presentModes)
+        let presentModes = Vulkan.getArray(of: VkPresentModeKHR.self) { count, modes in
+            vkGetPhysicalDeviceSurfacePresentModesKHR(
+                device, surface, count, modes)
+        }
 
         self.capabilities = capabilities
         self.formats = formats

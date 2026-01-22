@@ -263,6 +263,38 @@ private func createVMA(
     return allocator!
 }
 
+private func createSwapChain(
+    surface: VkSurfaceKHR,
+    physicalDevice device: VkPhysicalDevice
+) {
+    let swapchainCI = Pin(VkSwapchainCreateInfoKHR())
+
+    let supportDetails = SwapChainSupportDetails(
+        physicalDevice: device, 
+        surface: surface
+    )
+
+    print(supportDetails.formats)
+    let surfaceCaps = supportDetails.capabilities
+
+    let imageFormat = VkFormat(VK_FORMAT_B8G8R8A8_SRGB.rawValue)
+
+    swapchainCI[].sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR
+    swapchainCI[].surface = surface
+    swapchainCI[].minImageCount = surfaceCaps.minImageCount
+    swapchainCI[].imageFormat = imageFormat
+    swapchainCI[].imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR
+    swapchainCI[].imageExtent = VkExtent2D(
+        width: surfaceCaps.currentExtent.width,
+        height: surfaceCaps.currentExtent.height
+    )
+    swapchainCI[].imageArrayLayers = 1
+    swapchainCI[].imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT.rawValue
+    swapchainCI[].preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+    swapchainCI[].compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
+    swapchainCI[].presentMode = VK_PRESENT_MODE_FIFO_KHR
+}
+
 class VulkanState {
     let instance: VkInstance
     let surface: VkSurfaceKHR
@@ -292,6 +324,8 @@ class VulkanState {
         allocator = createVMA(
             instance: instance, physicalDevice: physicalDevice, logicalDevice: device)
 
+
+        createSwapChain(surface: surface, physicalDevice: physicalDevice)
     }
 
     deinit {
