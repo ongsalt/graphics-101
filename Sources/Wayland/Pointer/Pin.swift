@@ -9,12 +9,27 @@ public class Pin<T> {
         ptr = UnsafeMutablePointer.allocate(capacity: 1)
         ptr.initialize(to: value)
 
-        opaque = OpaquePointer(ptr) 
+        opaque = OpaquePointer(ptr)
     }
 
     public var pointee: T {
         get {
             ptr.pointee
+        }
+        _modify {
+            yield &ptr.pointee
+        }
+        set {
+            ptr.pointee = newValue
+        }
+    }
+
+    public subscript() -> T {
+        get {
+            ptr.pointee
+        }
+        _modify {
+            yield &ptr.pointee
         }
         set {
             ptr.pointee = newValue
@@ -22,10 +37,13 @@ public class Pin<T> {
     }
 
     // lmao
-    public func immortalize() {
+    @discardableResult
+    public func leak() -> Pin<T> {
         Unmanaged.passRetained(self)
+
+        return self
     }
- 
+
     deinit {
         ptr.deinitialize(count: 1)
         ptr.deallocate()

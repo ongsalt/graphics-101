@@ -30,6 +30,7 @@ struct Vulkan {
     }
 
     static let apiVersion1_0 = makeApiVersion(variant: 0, major: 1, minor: 0, patch: 0)
+    static let apiVersion1_3 = makeApiVersion(variant: 0, major: 1, minor: 3, patch: 0)
 
     nonisolated static func printAvailableExtension() {
         var count: UInt32 = 0

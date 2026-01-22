@@ -1,5 +1,5 @@
-@preconcurrency import CVMA
 @preconcurrency import CVolk
+// @preconcurrency import CVMA
 import Glibc
 import Wayland
 
@@ -27,7 +27,7 @@ private let deviceExtensions: CStringArray = [
 ]
 
 private func createInstance() -> VkInstance {
-    // Vulkan.printAvailableLayers()
+    volkInitialize()
     var instance: VkInstance! = VkInstance(bitPattern: 0)
 
     // how long should this be alive tho
@@ -39,11 +39,13 @@ private func createInstance() -> VkInstance {
             applicationVersion: Vulkan.makeVersion(major: 1, minor: 0, patch: 0),
             pEngineName: "yomum engine".persist(),
             engineVersion: Vulkan.makeVersion(major: 1, minor: 0, patch: 0),
-            apiVersion: Vulkan.apiVersion1_0
-        ))
+            apiVersion: Vulkan.apiVersion1_3
+        )
+    )
 
     // TODO: check for availability
-
+    // print(instanceLayers.ptr)
+    // print(instanceExtensions.ptr)
     var createInfo = VkInstanceCreateInfo(
         sType: VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         pNext: nil,
@@ -69,6 +71,10 @@ private func createInstance() -> VkInstance {
             "Cannot create vulkan instance [code: \(result)] pls see https://docs.vulkan.org/refpages/latest/refpages/source/VkResult.html"
         )
     }
+
+    volkLoadInstance(instance)
+
+    // print("result \(result), instance: \(instance)")
 
     return instance
 }
@@ -177,19 +183,26 @@ private func createLogicalDevice(families: SelectedQueuesIndices, physicalDevice
         count: families.uniqueCount
     )
 
-    let deviceFeatures = Pin(
-        {
-            var features = VkPhysicalDeviceFeatures()
-            // features.
-
-            return features
-        }())
+    let deviceFeatures = Pin(VkPhysicalDeviceFeatures())
+    deviceFeatures[].samplerAnisotropy = true
 
     let device = queueCreateInfos.withUnsafeBufferPointer { queueCreateInfos in
-        var deviceCreateInfo12 = VkPhysicalDeviceVulkan12Features()
+        let enabledVk12Features = Pin(VkPhysicalDeviceVulkan12Features())
+        enabledVk12Features[].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES
+        enabledVk12Features[].descriptorIndexing = true
+        enabledVk12Features[].descriptorBindingVariableDescriptorCount = true
+        enabledVk12Features[].runtimeDescriptorArray = true
+        enabledVk12Features[].bufferDeviceAddress = true
+
+        let enabledVk13Features = Pin(VkPhysicalDeviceVulkan13Features())
+        enabledVk13Features[].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES
+        enabledVk13Features[].pNext = UnsafeMutableRawPointer(enabledVk12Features.opaque)
+        enabledVk13Features[].synchronization2 = true
+        enabledVk13Features[].dynamicRendering = true
+
         var deviceCreateInfo = VkDeviceCreateInfo(
             sType: VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            pNext: nil,
+            pNext: enabledVk13Features.ptr,
             flags: VkDeviceCreateFlags(),
             queueCreateInfoCount: 1,
             pQueueCreateInfos: queueCreateInfos.baseAddress,
@@ -201,7 +214,6 @@ private func createLogicalDevice(families: SelectedQueuesIndices, physicalDevice
         )
 
         var device: VkDevice? = nil
-
         let result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nil, &device)
         guard result.rawValue == 0 else {
             fatalError(
@@ -223,6 +235,9 @@ private func createLogicalDevice(families: SelectedQueuesIndices, physicalDevice
         graphicsQueue: graphicsQueue!,
         presentQueue: presentQueue!
     )
+}
+
+func createVMA() {
 
 }
 

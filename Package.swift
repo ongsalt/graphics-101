@@ -3,8 +3,14 @@
 
 import PackageDescription
 
-let vulkanWaylandSetting: CSetting = .define(
-    "VK_USE_PLATFORM_WAYLAND_KHR", .when(platforms: [.linux]))
+let volkCDefine: [CSetting] = [
+    .define("VK_USE_PLATFORM_WAYLAND_KHR", .when(platforms: [.linux])),
+    // .define("VOLK_IMPLEMENTATION"),
+    .define("VK_VERSION_1_0"),
+    .define("VK_VERSION_1_1"),
+    .define("VK_VERSION_1_2"),
+    .define("VK_VERSION_1_3"),
+]
 
 let package = Package(
     name: "graphics-101",
@@ -25,9 +31,7 @@ let package = Package(
 
         .target(
             name: "CVolk",
-            cSettings: [
-                vulkanWaylandSetting
-            ],
+            cSettings: [] + volkCDefine,
             swiftSettings: [],
         ),
 
@@ -36,12 +40,10 @@ let package = Package(
             dependencies: [
                 .product(name: "Numerics", package: "swift-numerics"),
                 .target(name: "Wayland", condition: .when(platforms: [.linux])),
-                "CVMA",
+                // "CVMA",
                 "CVolk",
             ],
-            cSettings: [
-                vulkanWaylandSetting
-            ],
+            cSettings: [] + volkCDefine,
         ),
     ]
 )

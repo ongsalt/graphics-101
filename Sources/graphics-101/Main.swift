@@ -21,6 +21,11 @@ struct Graphics101 {
         let window = RawWindow(display: display, title: "yomama")
         window.show()
 
+        let vulkanState = VulkanState(
+            waylandDisplay: display, 
+            waylandSurface: window.surface
+        )
+
         RunLoop.main.run()
         _ = consume token
     }
