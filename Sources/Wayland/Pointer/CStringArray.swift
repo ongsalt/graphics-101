@@ -1,5 +1,12 @@
 import Foundation
 
+@resultBuilder
+public struct CStringArrayBuilder {
+    public static func buildBlock(_ components: String...) -> [String] {
+        components
+    }
+}
+
 public final class CStringArray: @unchecked Sendable {
     let strings: [String]
     // We store the pointer array itself
@@ -27,6 +34,10 @@ public final class CStringArray: @unchecked Sendable {
         }
     }
 
+    public convenience init(@CStringArrayBuilder builder build: () -> [String]) {
+        self.init(build())
+    }
+
     func leak() {
         Unmanaged.passRetained(self)
     }
@@ -52,6 +63,6 @@ extension CStringArray: ExpressibleByArrayLiteral {
     public typealias ArrayLiteralElement = String
 
     public convenience init(arrayLiteral elements: String...) {
-        self.init(elements)    
+        self.init(elements)
     }
 }

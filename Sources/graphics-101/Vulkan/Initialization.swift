@@ -3,15 +3,11 @@
 import Glibc
 import Wayland
 
-private let instanceLayers = CStringArray(
-    {
-        var layers: [String] = []
-        #if DEBUG
-            layers.append("VK_LAYER_KHRONOS_validation")
-        #endif
-
-        return layers
-    }())
+private let instanceLayers = CStringArray {
+    #if DEBUG
+        "VK_LAYER_KHRONOS_validation"
+    #endif
+}
 private let instanceExtensions: CStringArray = [
     "VK_KHR_get_physical_device_properties2",
     "VK_KHR_external_fence_capabilities",
