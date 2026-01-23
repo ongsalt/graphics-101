@@ -95,7 +95,7 @@ class RenderLoop {
 
             // bind other stuff here
 
-            vkCmdDrawIndexed(commandBuffer, 3, 3, 1, 0, 0)
+            vkCmdDraw(commandBuffer, 3, 1, 0, 0)
 
             vkCmdEndRendering(commandBuffer)
 

@@ -324,8 +324,8 @@ private func createGraphicsPipeline(device: VkDevice, swapChain: SwapChain) -> V
     let multisampleCI = Box(VkPipelineMultisampleStateCreateInfo()) {
         $0.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO
         $0.sampleShadingEnable = false
-        // $0.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT
-        $0.rasterizationSamples = VK_SAMPLE_COUNT_4_BIT
+        $0.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT
+        // $0.rasterizationSamples = VK_SAMPLE_COUNT_4_BIT
         $0.minSampleShading = 1.0  // Optional
         $0.pSampleMask = nil  // Optional
         $0.alphaToCoverageEnable = false  // Optional
