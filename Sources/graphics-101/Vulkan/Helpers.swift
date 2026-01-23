@@ -133,3 +133,9 @@ struct SwapChainSupportDetails {
         self.presentModes = presentModes
     }
 }
+
+extension Array where Element == OpaquePointer? {
+    func unwrapPointer() -> [OpaquePointer] {
+        self.map { $0! }
+    }
+}

@@ -26,7 +26,7 @@ private func createInstance() -> VkInstance {
     var instance: VkInstance! = VkInstance(bitPattern: 0)
 
     // how long should this be alive tho
-    let appInfo = Pin(
+    let appInfo = Box(
         VkApplicationInfo(
             sType: VK_STRUCTURE_TYPE_APPLICATION_INFO,
             pNext: nil,
@@ -164,7 +164,7 @@ private func createLogicalDevice(families: SelectedQueuesIndices, physicalDevice
     -> (device: VkDevice, graphicsQueue: VkQueue, presentQueue: VkQueue)
 {
 
-    let priority = Pin(Float(1.0))
+    let priority = Box(Float(1.0))
 
     let queueCreateInfos = Array(
         repeating: VkDeviceQueueCreateInfo(
@@ -178,18 +178,18 @@ private func createLogicalDevice(families: SelectedQueuesIndices, physicalDevice
         count: families.uniqueCount
     )
 
-    let deviceFeatures = Pin(VkPhysicalDeviceFeatures())
+    let deviceFeatures = Box(VkPhysicalDeviceFeatures())
     deviceFeatures[].samplerAnisotropy = true
 
     let device = queueCreateInfos.withUnsafeBufferPointer { queueCreateInfos in
-        let enabledVk12Features = Pin(VkPhysicalDeviceVulkan12Features())
+        let enabledVk12Features = Box(VkPhysicalDeviceVulkan12Features())
         enabledVk12Features[].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES
         enabledVk12Features[].descriptorIndexing = true
         enabledVk12Features[].descriptorBindingVariableDescriptorCount = true
         enabledVk12Features[].runtimeDescriptorArray = true
         enabledVk12Features[].bufferDeviceAddress = true
 
-        let enabledVk13Features = Pin(VkPhysicalDeviceVulkan13Features())
+        let enabledVk13Features = Box(VkPhysicalDeviceVulkan13Features())
         enabledVk13Features[].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES
         enabledVk13Features[].pNext = UnsafeMutableRawPointer(enabledVk12Features.opaque)
         enabledVk13Features[].synchronization2 = true
@@ -237,7 +237,7 @@ private func createVMA(
     physicalDevice: VkPhysicalDevice,
     logicalDevice: VkDevice,
 ) -> VmaAllocator {
-    let allocatorCreateInfo = Pin(createZeroedStruct(of: VmaAllocatorCreateInfo.self))
+    let allocatorCreateInfo = Box(createZeroedStruct(of: VmaAllocatorCreateInfo.self))
     allocatorCreateInfo[].physicalDevice = physicalDevice
     allocatorCreateInfo[].device = logicalDevice
     allocatorCreateInfo[].instance = instance
@@ -249,7 +249,7 @@ private func createVMA(
         allocatorCreateInfo[].flags |= VMA_ALLOCATOR_CREATE_KHR_EXTERNAL_MEMORY_WIN32_BIT.rawValue
     #endif
 
-    let vulkanFunctions = Pin(VmaVulkanFunctions())
+    let vulkanFunctions = Box(VmaVulkanFunctions())
     vmaImportVulkanFunctionsFromVolk(allocatorCreateInfo.ptr, vulkanFunctions.ptr)
 
     allocatorCreateInfo[].pVulkanFunctions = vulkanFunctions.readonly
@@ -263,36 +263,107 @@ private func createVMA(
     return allocator!
 }
 
+private func chooseSwapSurfaceFormat(from availableFormats: [VkSurfaceFormatKHR])
+    -> VkSurfaceFormatKHR
+{
+    return availableFormats.first {
+        $0.format == VK_FORMAT_B8G8R8A8_SRGB && $0.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+    } ?? availableFormats[0]
+}
+
+// TODO: allow vsync toggle
+private func chooseSwapPresentMode(from availablePresentModes: [VkPresentModeKHR])
+    -> VkPresentModeKHR
+{
+    return availablePresentModes.contains(VK_PRESENT_MODE_MAILBOX_KHR)
+        ? VK_PRESENT_MODE_MAILBOX_KHR
+        : VK_PRESENT_MODE_FIFO_KHR
+}
+
+private func chooseSwapExtent(capabilities: VkSurfaceCapabilitiesKHR, preferredSize: SIMD2<UInt32>)
+    -> VkExtent2D
+{
+    if capabilities.currentExtent.width != UInt32.max {
+        return capabilities.currentExtent
+    }
+
+    let width = preferredSize.x
+    let height = preferredSize.y
+
+    let actualExtent = VkExtent2D(
+        width: width.clamp(
+            to: capabilities.minImageExtent.width...capabilities.maxImageExtent.width),
+        height: height.clamp(
+            to: capabilities.minImageExtent.height...capabilities.maxImageExtent.height)
+    )
+
+    return actualExtent
+}
+
 private func createSwapChain(
     surface: VkSurfaceKHR,
-    physicalDevice device: VkPhysicalDevice
-) {
-    let swapchainCI = Pin(VkSwapchainCreateInfoKHR())
-
+    physicalDevice: VkPhysicalDevice,
+    logicalDevice device: VkDevice,
+    preferredSize: SIMD2<UInt32>,
+    indices: SelectedQueuesIndices,
+    oldSwapchain: VkSwapchainKHR? = nil
+) -> VkSwapchainKHR {
     let supportDetails = SwapChainSupportDetails(
-        physicalDevice: device, 
+        physicalDevice: physicalDevice,
         surface: surface
     )
 
-    print(supportDetails.formats)
+    let surfaceFormat = chooseSwapSurfaceFormat(from: supportDetails.formats)
+    let presentMode = chooseSwapPresentMode(from: supportDetails.presentModes)
+    let extent = chooseSwapExtent(
+        capabilities: supportDetails.capabilities, preferredSize: preferredSize)
+
+    // print(supportDetails.formats)
     let surfaceCaps = supportDetails.capabilities
 
-    let imageFormat = VkFormat(VK_FORMAT_B8G8R8A8_SRGB.rawValue)
+    let queueFamilyIndices = [indices.graphicsFamily!, indices.presentFamily!].map { UInt32($0) }
+    let swapChain = queueFamilyIndices.withUnsafeBufferPointer { queueFamilyIndices in
+        let swapchainCI = Box(VkSwapchainCreateInfoKHR())
+        swapchainCI[].sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR
+        swapchainCI[].surface = surface
+        swapchainCI[].minImageCount = surfaceCaps.minImageCount
+        swapchainCI[].imageFormat = surfaceFormat.format
+        swapchainCI[].imageColorSpace = surfaceFormat.colorSpace
+        swapchainCI[].imageExtent = extent
+        swapchainCI[].imageArrayLayers = 1
+        swapchainCI[].imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT.rawValue
+        swapchainCI[].presentMode = presentMode
 
-    swapchainCI[].sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR
-    swapchainCI[].surface = surface
-    swapchainCI[].minImageCount = surfaceCaps.minImageCount
-    swapchainCI[].imageFormat = imageFormat
-    swapchainCI[].imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR
-    swapchainCI[].imageExtent = VkExtent2D(
-        width: surfaceCaps.currentExtent.width,
-        height: surfaceCaps.currentExtent.height
-    )
-    swapchainCI[].imageArrayLayers = 1
-    swapchainCI[].imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT.rawValue
-    swapchainCI[].preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
-    swapchainCI[].compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
-    swapchainCI[].presentMode = VK_PRESENT_MODE_FIFO_KHR
+        swapchainCI[].preTransform = supportDetails.capabilities.currentTransform
+        swapchainCI[].compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
+        swapchainCI[].clipped = true
+
+        if indices.graphicsFamily != indices.presentFamily {
+            swapchainCI[].imageSharingMode = VK_SHARING_MODE_CONCURRENT
+            swapchainCI[].queueFamilyIndexCount = 2
+
+            swapchainCI[].pQueueFamilyIndices = queueFamilyIndices.baseAddress
+        } else {
+            swapchainCI[].imageSharingMode = VK_SHARING_MODE_EXCLUSIVE
+            swapchainCI[].queueFamilyIndexCount = 0  // Optional
+            swapchainCI[].pQueueFamilyIndices = nil  // Optional
+        }
+
+        // TODO: specify this
+        swapchainCI[].oldSwapchain = oldSwapchain
+
+        var swapChain: VkSwapchainKHR? = VkSwapchainKHR(bitPattern: 0)
+        vkCreateSwapchainKHR(device, swapchainCI.ptr, nil, &swapChain).expect(
+            "Cannot create swapchain")
+
+        return swapChain!
+    }
+
+    return swapChain
+}
+
+private func createImageView() {
+    
 }
 
 class VulkanState {
@@ -306,6 +377,9 @@ class VulkanState {
     let presentQueue: VkQueue
 
     let allocator: VmaAllocator
+
+    var swapChain: VkSwapchainKHR
+    var swapChainImages: [VkImage]
 
     init(waylandDisplay: Display, waylandSurface: Surface) {
         instance = createInstance()
@@ -324,13 +398,39 @@ class VulkanState {
         allocator = createVMA(
             instance: instance, physicalDevice: physicalDevice, logicalDevice: device)
 
+        swapChain = createSwapChain(
+            surface: surface,
+            physicalDevice: physicalDevice,
+            logicalDevice: device,
+            preferredSize: SIMD2(800, 600),
+            indices: families
+        )
 
-        createSwapChain(surface: surface, physicalDevice: physicalDevice)
+        swapChainImages = Vulkan.getArray(of: VkImage?.self) { [device, swapChain] count, arr in
+            vkGetSwapchainImagesKHR(device, swapChain, count, arr)
+        }.unwrapPointer()
     }
 
-    deinit {
+    func resize(to: SIMD2<UInt32>) {
+        swapChain = createSwapChain(
+            surface: surface,
+            physicalDevice: physicalDevice,
+            logicalDevice: device,
+            preferredSize: SIMD2(800, 600),
+            indices: families,
+            oldSwapchain: swapChain
+        )
+    }
+
+    consuming func destroy() {
+        vkDestroySwapchainKHR(device, swapChain, nil)
         vkDestroySurfaceKHR(instance, surface, nil)
         vkDestroyDevice(device, nil)
         vkDestroyInstance(instance, nil)
+    }
+
+    deinit {
+        // TODO: wait for idle
+        destroy()
     }
 }

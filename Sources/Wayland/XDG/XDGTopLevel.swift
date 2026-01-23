@@ -5,10 +5,10 @@ import Glibc
 // we should actually do codegen
 
 public struct XDGToplevelListener {
-    let configure: ((SIMD2<Int32>, [Any]) -> Void)? = nil
-    let close: (() -> Void)? = nil
-    let configureBounds: ((SIMD2<Int32>) -> Void)? = nil
-    let wmCapabilities: (([Any]) -> Void)? = nil
+    let configure: ((SIMD2<Int32>, [Any]) -> Void)?
+    let close: (() -> Void)?
+    let configureBounds: ((SIMD2<Int32>) -> Void)?
+    let wmCapabilities: (([Any]) -> Void)?
 }
 
 public class XDGTopLevel {

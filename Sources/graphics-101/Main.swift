@@ -10,6 +10,8 @@ struct Graphics101 {
     }
 
     func run() throws {
+        try runOldImpl()
+        return
         let display = try Display()
         display.monitorEvents()
         // auto flush?

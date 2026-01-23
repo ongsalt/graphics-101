@@ -1,8 +1,13 @@
+import Synchronization
+import Foundation
+import Wayland
+
 // TODO: reuse image texture
-func createImage(width: Int, height: Int, padding: Float = 24, cornerRadius: Float = 72) -> Image {
+func createImage(width: Int, height: Int, padding: Float = 24, cornerRadius: Float = 36) -> Image {
     var image = Image(width: width, height: height, fill: .transparent)  // Color(rgba: 0x0000ff30)
 
     let bound = image.rect.padded(-padding)
+
     let p = Int(padding)
     // TODO: set global clip
 
@@ -78,4 +83,52 @@ func createImage(width: Int, height: Int, padding: Float = 24, cornerRadius: Flo
     }
 
     return image
+}
+
+func runOldImpl() throws {
+    let display = try Display()
+    display.monitorEvents()
+    // auto flush?
+    let token = RunLoop.main.addListener(on: [.beforeWaiting]) { _ in
+        display.flush()
+    }
+
+    let padding: Float = 18
+    let width = 640 + 2 * padding
+    let height = 480 + 2 * padding
+
+    let shm = SharedMemoryBuffer(
+        shm: display.registry.sharedMemoryBuffer)
+    let pool = shm.createPool(size: Int32(width * height * 4 * 4))
+
+    let window = Window(display: display, pool: pool, width: Int32(width), height: Int32(height))
+    window.show()
+
+    // launchCounter()
+
+    // _ = consume observer
+
+    // window.surface.onFrame(runImmediately: true) {
+    //     // print("called")
+    //     padding += 1
+
+
+    Task {
+        let start = ContinuousClock.now
+        let image = await Task.detached { [padding] in
+            createImage(width: Int(width), height: Int(height), padding: padding)
+        }.value
+
+        // ideally image.write(to: surface, rect: Rect())
+        image.write(to: window.currentBuffer.bufferData)  // for now
+        window.requestRedraw()
+        display.flush()
+        let end = ContinuousClock.now
+        print("Done in \(end - start)")
+        // bruh
+    }
+
+
+    RunLoop.main.run()
+    _ = consume token
 }
