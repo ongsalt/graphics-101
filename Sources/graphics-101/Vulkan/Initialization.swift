@@ -92,7 +92,7 @@ private func createWaylandSurface(
         &createInfo,
         nil,
         &surface
-    )
+    ).unwrap()
 
     return surface!
 }

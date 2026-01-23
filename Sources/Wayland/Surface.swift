@@ -1,7 +1,7 @@
 import CWayland
 
 // TODO: width height
-public class Surface {
+public class Surface: @unchecked Sendable {
     public let surface: OpaquePointer
     // var width: Int32
     private var runLoopObserver: RunLoopObserver? = nil

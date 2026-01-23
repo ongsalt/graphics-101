@@ -77,10 +77,16 @@ final class SwapChain {
     private static func chooseSwapSurfaceFormat(from availableFormats: [VkSurfaceFormatKHR])
         -> VkSurfaceFormatKHR
     {
-        return availableFormats.first {
+        let format = availableFormats.first {
             $0.format == VK_FORMAT_B8G8R8A8_SRGB
                 && $0.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
-        } ?? availableFormats[0]
+        }
+
+        if let format {
+            print("Picked \(format)")
+        }
+
+        return format ?? availableFormats[0]
     }
 
     // TODO: allow vsync toggle
@@ -151,7 +157,7 @@ final class SwapChain {
                 $0.presentMode = presentMode
 
                 $0.preTransform = supportDetails.capabilities.currentTransform
-                $0.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
+                $0.compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR
                 $0.clipped = true
 
                 if indices.graphicsFamily != indices.presentFamily {

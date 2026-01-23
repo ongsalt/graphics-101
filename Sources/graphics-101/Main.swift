@@ -10,7 +10,6 @@ struct Graphics101 {
     }
 
     func run() throws {
-
         let display = try Display()
         display.monitorEvents()
         // auto flush?
@@ -19,7 +18,7 @@ struct Graphics101 {
             display.flush()
         }
 
-        let window = RawWindow(display: display, title: "yomama")
+        let window: RawWindow = RawWindow(display: display, title: "yomama")
         window.show()
 
         let vulkanState = VulkanState(
@@ -28,12 +27,8 @@ struct Graphics101 {
         )
 
         let renderLoop = RenderLoop(state: vulkanState)
-        renderLoop.run()
-
-        // window.show()
-
-        print("done")
-
+        renderLoop.perform()
+        
         RunLoop.main.run()
         _ = consume token
     }
