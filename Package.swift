@@ -21,8 +21,7 @@ let package = Package(
         .target(
             name: "CVMA",
             cSettings: [
-                .define("VK_USE_PLATFORM_WAYLAND_KHR", .when(platforms: [.linux])),
-                // i should fucking put these 2 together
+                .define("VK_USE_PLATFORM_WAYLAND_KHR", .when(platforms: [.linux]))  // i should fucking put these 2 together
             ],
         ),
 
@@ -32,6 +31,9 @@ let package = Package(
                 .product(name: "Numerics", package: "swift-numerics"),
                 .target(name: "Wayland", condition: .when(platforms: [.linux])),
                 "CVMA",
+            ],
+            resources: [
+                .embedInCode("Resources")
             ],
             cSettings: [
                 .define("VK_USE_PLATFORM_WAYLAND_KHR", .when(platforms: [.linux]))
