@@ -11,10 +11,10 @@ final class SwapChain {
     var imageViews: [VkImageView]
 
     var fences: [VkFence]
-    var imageAvailableSemaphores: [VkSemaphore]
-    var renderFinishedSemaphores: [VkSemaphore]
+    var presentSemaphores: [VkSemaphore]
+    var renderSemaphore: [VkSemaphore]
 
-    let framesInFlightCount: Int  = 2
+    let framesInFlightCount: Int = 2
     var frameIndex: Int = 0
 
     init(
@@ -43,17 +43,17 @@ final class SwapChain {
         imageViews = Self.createImageViews(
             device: device, swapChainImages: images, swapChainSurfaceFormat: swapChainSurfaceFormat)
 
-        let c = Self.createFence(device: device, count: images.count)
+        let c = Self.createFence(device: device, count: framesInFlightCount, swapChainImageCount: images.count)
         self.fences = c.fences
-        self.imageAvailableSemaphores = c.render
-        self.renderFinishedSemaphores = c.present
+        self.presentSemaphores = c.present
+        self.renderSemaphore = c.render
     }
 
     func acquireNextImage() -> (VkImage, VkImageView, UInt32) {
         var imageIndex: UInt32 = 0
 
         vkAcquireNextImageKHR(
-            device, swapChain, UInt64.max, imageAvailableSemaphores[frameIndex], nil,
+            device, swapChain, UInt64.max, presentSemaphores[frameIndex], nil,
             &imageIndex
         ).unwrap()
 
@@ -210,8 +210,8 @@ final class SwapChain {
         return swapChainImageViews.map { $0! }
     }
 
-    private static func createFence(device: VkDevice, count: Int) -> (
-        fences: [VkFence], render: [VkSemaphore], present: [VkSemaphore]
+    private static func createFence(device: VkDevice, count: Int, swapChainImageCount: Int) -> (
+        fences: [VkFence], present: [VkSemaphore], render: [VkSemaphore]
     ) {
         var fenceCI = VkFenceCreateInfo(
             sType: VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -227,6 +227,7 @@ final class SwapChain {
 
         var fences = Array(repeating: VkFence(bitPattern: 0), count: count)
         var semaphores = Array(repeating: VkSemaphore(bitPattern: 0), count: count)
+        var renderSemaphores = Array(repeating: VkSemaphore(bitPattern: 0), count: swapChainImageCount)
 
         for i in 0..<count {
             vkCreateFence(device, &fenceCI, nil, &fences[i]).expect("Cannot create fence")
@@ -234,8 +235,13 @@ final class SwapChain {
                 "Cannot create semaphore")
         }
 
-        var renderSemaphores = Array(repeating: VkSemaphore(bitPattern: 0), count: count)
+        for i in 0..<swapChainImageCount {
+            vkCreateSemaphore(device, &semaphoreCI, nil, &renderSemaphores[i]).expect(
+                "Cannot create semaphore")
+        }
 
-        return (fences.unwrapPointer(), semaphores.unwrapPointer(), semaphores.unwrapPointer())
+        return (
+            fences.unwrapPointer(), semaphores.unwrapPointer(), renderSemaphores.unwrapPointer()
+        )
     }
 }

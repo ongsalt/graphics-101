@@ -20,6 +20,10 @@ public class Box<T> {
         ptr.initialize(to: value)
     }
 
+    public convenience init<K>(optional value: K) where T == K? {
+        self.init(value)
+    }
+
     public convenience init(leaking value: T) {
         self.init(value)
         self.leak()

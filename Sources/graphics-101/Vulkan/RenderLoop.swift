@@ -10,9 +10,10 @@ class RenderLoop {
     }
 
     func run() {
-        let swapChain = state.swapChain
-        graphics_101.run {
+        while !Task.isCancelled {
+            let swapChain = state.swapChain
             let frameIndex = swapChain.frameIndex
+
             swapChain.waitForFence(frameIndex: frameIndex)
 
             let (image, imageView, imageIndex) = swapChain.acquireNextImage()
@@ -75,21 +76,22 @@ class RenderLoop {
             vkCmdBeginRendering(commandBuffer, renderingInfo.ptr)
 
             // Set viewport and scissor
-            // var viewport = VkViewport(
-            //     x: 0,
-            //     y: 0,
-            //     width: Float(swapChain.extent.width),
-            //     height: Float(swapChain.extent.height),
-            //     minDepth: 0.0,
-            //     maxDepth: 1.0
-            // )
-            // vkCmdSetViewport(commandBuffer, 0, 1, &viewport)
+            var viewport = VkViewport(
+                x: 0,
+                y: 0,
+                width: Float(swapChain.extent.width),
+                height: Float(swapChain.extent.height),
+                minDepth: 0.0,
+                maxDepth: 1.0
+            )
+            vkCmdSetViewport(commandBuffer, 0, 1, &viewport)
 
-            // var scissor = VkRect2D(
-            //     offset: VkOffset2D(x: 0, y: 0),
-            //     extent: swapChain.extent
-            // )
-            // vkCmdSetScissor(commandBuffer, 0, 1, &scissor)
+            var scissor = VkRect2D(
+                offset: VkOffset2D(x: 0, y: 0),
+                extent: swapChain.extent
+            )
+            
+            vkCmdSetScissor(commandBuffer, 0, 1, &scissor)
 
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline)
 
@@ -124,14 +126,39 @@ class RenderLoop {
 
             vkEndCommandBuffer(commandBuffer).unwrap()
 
+            // Submit
+            let waitStages = Box(
+                VkPipelineStageFlags(
+                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.rawValue))
+            let presentSemaphore = Box(
+                optional: swapChain.presentSemaphores[frameIndex])
+            let renderSemaphore = Box(
+                optional: swapChain.renderSemaphore[Int(imageIndex)])
+            let commandBufferPtr = Box(optional: commandBuffer)
+
+            let submitInfo = Box(VkSubmitInfo()) {
+                $0.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO
+                $0.waitSemaphoreCount = 1
+                // wont start rendering until current frame in presented
+                $0.pWaitSemaphores = presentSemaphore.readonly
+                $0.pWaitDstStageMask = waitStages.readonly
+                $0.commandBufferCount = 1
+                $0.pCommandBuffers = commandBufferPtr.readonly
+                $0.signalSemaphoreCount = 1
+                $0.pSignalSemaphores = renderSemaphore.readonly
+            }
+
+            vkQueueSubmit(state.graphicsQueue, 1, submitInfo.ptr, swapChain.fences[frameIndex])
+                .unwrap()
+            // present
+
             let swapchainHandle: Box<VkSwapchainKHR?> = Box(swapChain.swapChain)
             let imageIndexCopy = Box(imageIndex)
-            let waitSemaphore: Box<VkSemaphore?> = Box(swapChain.renderFinishedSemaphores[swapChain.frameIndex])
 
             let presentInfo = Box(VkPresentInfoKHR()) {
                 $0.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR
                 $0.waitSemaphoreCount = 1
-                $0.pWaitSemaphores = waitSemaphore.readonly
+                $0.pWaitSemaphores = renderSemaphore.readonly
                 $0.swapchainCount = 1
                 $0.pSwapchains = swapchainHandle.readonly
                 $0.pImageIndices = imageIndexCopy.readonly

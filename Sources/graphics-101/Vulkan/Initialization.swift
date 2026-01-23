@@ -395,6 +395,8 @@ private func createGraphicsPipeline(device: VkDevice, swapChain: SwapChain) -> V
             "Cannot create pipeline layout")
     }
 
+    let dynamicStates = [VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR]
+
     let imageFormat = Box(swapChain.surfaceFormat.format)
     // Dynamic rendering
     let renderingCI = Box(VkPipelineRenderingCreateInfo()) {
@@ -405,27 +407,36 @@ private func createGraphicsPipeline(device: VkDevice, swapChain: SwapChain) -> V
     }
 
     let pipeline = shaderStages.withUnsafeBufferPointer { shaderStages in
-        var pipelineCI = with(VkGraphicsPipelineCreateInfo()) {
-            $0.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO
-            $0.pNext = renderingCI.raw
-            $0.layout = pipelineLayout!
+        dynamicStates.withUnsafeBufferPointer { dynamicStates in
+            let dynamicStateCI = Box(VkPipelineDynamicStateCreateInfo()) {
+                $0.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO
+                $0.dynamicStateCount = 2
+                $0.pDynamicStates = dynamicStates.baseAddress
+            }
 
-            $0.stageCount = UInt32(shaderStages.count)
-            $0.pStages = shaderStages.baseAddress
-            $0.pVertexInputState = vertexInputCI.readonly
-            $0.pInputAssemblyState = inputAssemblyCI.readonly
-            $0.pMultisampleState = multisampleCI.readonly
-            $0.pColorBlendState = colorBlendingCI.readonly
-            $0.pRasterizationState = rasterizationCI.readonly
-            $0.pViewportState = viewportCI.readonly
+            var pipelineCI = with(VkGraphicsPipelineCreateInfo()) {
+                $0.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO
+                $0.pNext = renderingCI.raw
+                $0.layout = pipelineLayout!
+
+                $0.stageCount = UInt32(shaderStages.count)
+                $0.pStages = shaderStages.baseAddress
+                $0.pVertexInputState = vertexInputCI.readonly
+                $0.pInputAssemblyState = inputAssemblyCI.readonly
+                $0.pMultisampleState = multisampleCI.readonly
+                $0.pColorBlendState = colorBlendingCI.readonly
+                $0.pRasterizationState = rasterizationCI.readonly
+                $0.pViewportState = viewportCI.readonly
+                $0.pDynamicState = dynamicStateCI.readonly
+            }
+
+            let pipeline = with(VkPipeline(bitPattern: 0)) {
+                vkCreateGraphicsPipelines(device, nil, 1, &pipelineCI, nil, &$0).expect(
+                    "Cannot create pipeline")
+            }!
+
+            return pipeline
         }
-
-        let pipeline = with(VkPipeline(bitPattern: 0)) {
-            vkCreateGraphicsPipelines(device, nil, 1, &pipelineCI, nil, &$0).expect(
-                "Cannot create pipeline")
-        }!
-
-        return pipeline
     }
 
     return pipeline
