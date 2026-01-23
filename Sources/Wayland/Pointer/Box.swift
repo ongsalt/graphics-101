@@ -7,7 +7,15 @@ public class Box<T> {
         OpaquePointer(ptr)
     }
 
-    public init(_ value: T) {
+    public var raw: UnsafeRawPointer {
+        UnsafeRawPointer(ptr)
+    }
+
+    public init(_ value: T, mutate: ((inout T) -> Void)? = nil) {
+        var value = value
+        if let mutate {
+            mutate(&value)
+        }
         ptr = UnsafeMutablePointer.allocate(capacity: 1)
         ptr.initialize(to: value)
     }
@@ -53,6 +61,10 @@ public class Box<T> {
         set {
             ptr.pointee = newValue
         }
+    }
+
+    public func mutate(_ block: (inout T) -> Void) {
+        block(&pointee)
     }
 
     // lmao

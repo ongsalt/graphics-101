@@ -40,7 +40,6 @@ extension VkResult {
             try block()
         }
     }
-
 }
 
 struct Vulkan {
@@ -137,5 +136,11 @@ struct SwapChainSupportDetails {
 extension Array where Element == OpaquePointer? {
     func unwrapPointer() -> [OpaquePointer] {
         self.map { $0! }
+    }
+}
+
+extension UnsafeMutableRawBufferPointer {
+    var hexString: String {
+        self.map { String(format: "%02X", $0) }.joined(separator: " ")
     }
 }

@@ -33,11 +33,10 @@ let package = Package(
                 "CVMA",
             ],
             resources: [
-                .embedInCode("Resources")
+                .copy("Resources/Compiled/")
             ],
             cSettings: [
                 .define("VK_USE_PLATFORM_WAYLAND_KHR", .when(platforms: [.linux]))
-
             ],
         ),
     ]

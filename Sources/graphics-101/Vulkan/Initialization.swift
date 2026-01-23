@@ -111,6 +111,7 @@ private func pickPhysicalDevice(instance: VkInstance) -> VkPhysicalDevice {
         vkGetPhysicalDeviceProperties(device, &properties)
 
         var deviceFeatures = VkPhysicalDeviceFeatures()
+
         vkGetPhysicalDeviceFeatures(device, &deviceFeatures)
 
         // let name = String(cStringPointer: &properties.deviceName)
@@ -307,7 +308,7 @@ private func createSwapChain(
     preferredSize: SIMD2<UInt32>,
     indices: SelectedQueuesIndices,
     oldSwapchain: VkSwapchainKHR? = nil
-) -> VkSwapchainKHR {
+) -> (swapChain: VkSwapchainKHR, surfaceFormat: VkSurfaceFormatKHR, extent: VkExtent2D) {
     let supportDetails = SwapChainSupportDetails(
         physicalDevice: physicalDevice,
         surface: surface
@@ -359,11 +360,201 @@ private func createSwapChain(
         return swapChain!
     }
 
-    return swapChain
+    return (swapChain, surfaceFormat, extent)
 }
 
-private func createImageView() {
-    
+func createImageViews(
+    device: VkDevice, swapChainImages: [VkImage], swapChainSurfaceFormat: VkSurfaceFormatKHR
+) -> [VkImageView] {
+    var swapChainImageViews = Array(
+        repeating: VkImageView(bitPattern: 0), count: swapChainImages.count)
+
+    for (i, image) in swapChainImages.enumerated() {
+        var createInfo = VkImageViewCreateInfo()
+        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO
+        createInfo.image = image
+        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D
+        createInfo.format = swapChainSurfaceFormat.format
+
+        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY
+        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY
+        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY
+        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY
+
+        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT.rawValue
+        createInfo.subresourceRange.baseMipLevel = 0
+        createInfo.subresourceRange.levelCount = 1
+        createInfo.subresourceRange.baseArrayLayer = 0
+        createInfo.subresourceRange.layerCount = 1
+
+        vkCreateImageView(device, &createInfo, nil, &swapChainImageViews[i]).expect(
+            "Cannot create image view")
+    }
+
+    return swapChainImageViews.map { $0! }
+}
+
+private func createGraphicsPipeline(device: VkDevice, swapChainExtent: VkExtent2D, surfaceFormat: VkSurfaceFormatKHR) {
+    let shader = try! Shader(filename: "triangle", device: device)
+
+    var vertCi = VkPipelineShaderStageCreateInfo()
+    vertCi.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO
+    vertCi.stage = VK_SHADER_STAGE_VERTEX_BIT
+    vertCi.module = shader.shaderModule
+    let vertName = CString("vtx_main")
+    vertCi.pName = vertName.ptr
+
+    var fragCi = VkPipelineShaderStageCreateInfo()
+    fragCi.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO
+    fragCi.stage = VK_SHADER_STAGE_FRAGMENT_BIT
+    fragCi.module = shader.shaderModule
+    let fragName = CString("frag_main")
+    fragCi.pName = fragName.ptr
+
+    let shaderStages = [vertCi, fragCi]
+
+    let vertexInputCI = Box(VkPipelineVertexInputStateCreateInfo()) {
+        $0.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO
+        // $0.vertexBindingDescriptionCount = 0
+        // $0.pVertexBindingDescriptions = nil  // Optional
+        // $0.vertexAttributeDescriptionCount = 0
+        // $0.pVertexAttributeDescriptions = nil  // Optional
+    }
+
+    let inputAssemblyCI = Box(VkPipelineInputAssemblyStateCreateInfo()) {
+        $0.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO
+        $0.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
+        $0.primitiveRestartEnable = false
+    }
+
+    let viewport = Box(
+        VkViewport(
+            x: 0,
+            y: 0,
+            width: Float(swapChainExtent.width),
+            height: Float(swapChainExtent.height),
+            minDepth: 0,
+            maxDepth: 1
+        ))
+
+    let scissor = Box(
+        VkRect2D(
+            offset: VkOffset2D(x: 0, y: 0),
+            extent: swapChainExtent
+        ))
+
+    let viewportCI = Box(VkPipelineViewportStateCreateInfo()) {
+        $0.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO
+        $0.viewportCount = 1
+        $0.pViewports = viewport.readonly
+        $0.scissorCount = 1
+        $0.pScissors = scissor.readonly
+    }
+
+    let multisampleCI = Box(VkPipelineMultisampleStateCreateInfo()) {
+        $0.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO
+        $0.sampleShadingEnable = false
+        // $0.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT
+        $0.rasterizationSamples = VK_SAMPLE_COUNT_4_BIT
+        $0.minSampleShading = 1.0  // Optional
+        $0.pSampleMask = nil  // Optional
+        $0.alphaToCoverageEnable = false  // Optional
+        $0.alphaToOneEnable = false  // Optional
+    }
+
+    let rasterizationCI = Box(VkPipelineRasterizationStateCreateInfo()) { rasterizer in
+        rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO
+        rasterizer.depthClampEnable = false
+        rasterizer.polygonMode = VK_POLYGON_MODE_FILL
+        rasterizer.lineWidth = 1.0
+
+        // rasterizer.cullMode = VK_CULL_MODE_BACK_BIT.rawValue
+        // rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE
+
+        // rasterizer.depthBiasEnable = false
+        // rasterizer.depthBiasConstantFactor = 0.0  // Optional
+        // rasterizer.depthBiasClamp = 0.0  // Optional
+        // rasterizer.depthBiasSlopeFactor = 0.0  // Optional
+    }
+
+    let pushConstantRange = Box(VkPushConstantRange()) {
+        $0.stageFlags = VK_SHADER_STAGE_VERTEX_BIT.rawValue
+        $0.size = UInt32(MemoryLayout<VkDeviceAddress>.size)
+    }
+
+    let colorBlendAttachment = Box(VkPipelineColorBlendAttachmentState()) {
+        $0.colorWriteMask = VkColorComponentFlags(
+            VK_COLOR_COMPONENT_R_BIT.rawValue | VK_COLOR_COMPONENT_G_BIT.rawValue
+                | VK_COLOR_COMPONENT_B_BIT.rawValue | VK_COLOR_COMPONENT_A_BIT.rawValue
+        )
+        $0.blendEnable = true
+        $0.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA
+        $0.dstColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA
+        $0.colorBlendOp = VK_BLEND_OP_ADD
+        $0.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE
+        // $0.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO
+        $0.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA
+        $0.alphaBlendOp = VK_BLEND_OP_ADD
+    }
+
+    let colorBlendingCI = Box(VkPipelineColorBlendStateCreateInfo()) {
+        $0.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO
+        $0.logicOpEnable = false
+        $0.logicOp = VK_LOGIC_OP_COPY
+        $0.attachmentCount = 1
+        $0.pAttachments = colorBlendAttachment.readonly
+        $0.blendConstants.0 = 0.0
+        $0.blendConstants.1 = 0.0
+        $0.blendConstants.2 = 0.0
+        $0.blendConstants.3 = 0.0
+    }
+
+    let pipelineLayoutCI = Box(
+        VkPipelineLayoutCreateInfo(
+            sType: VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+            pNext: nil,
+            flags: VkPipelineLayoutCreateFlags(),
+            setLayoutCount: 0,
+            pSetLayouts: nil,
+            pushConstantRangeCount: 1,
+            pPushConstantRanges: pushConstantRange.ptr
+        ))
+
+    let pipelineLayout = with(VkPipelineLayout(bitPattern: 0)) {
+        vkCreatePipelineLayout(device, pipelineLayoutCI.ptr, nil, &$0).expect(
+            "Cannot create pipeline layout")
+    }
+
+    let imageFormat = Box(surfaceFormat.format)
+    // Dynamic rendering
+    let renderingCI = Box(VkPipelineRenderingCreateInfo()) {
+        $0.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO
+        $0.colorAttachmentCount = 1
+        $0.pColorAttachmentFormats = imageFormat.readonly
+        // $0.depthAttachmentFormat = depthFormat
+    }
+
+    shaderStages.withUnsafeBufferPointer { shaderStages in
+        var pipelineCI = with(VkGraphicsPipelineCreateInfo()) {
+            $0.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO
+            $0.pNext = renderingCI.raw
+            $0.layout = pipelineLayout!
+
+            $0.stageCount = UInt32(shaderStages.count)
+            $0.pStages = shaderStages.baseAddress
+            $0.pVertexInputState = vertexInputCI.readonly
+            $0.pInputAssemblyState = inputAssemblyCI.readonly
+            $0.pMultisampleState = multisampleCI.readonly
+            $0.pColorBlendState = colorBlendingCI.readonly
+            $0.pRasterizationState = rasterizationCI.readonly
+            $0.pViewportState = viewportCI.readonly
+        }
+
+        let pipeline = with(VkPipeline(bitPattern: 0)) {
+            vkCreateGraphicsPipelines(device, nil, 1, &pipelineCI, nil, &$0).expect(
+                "Cannot create pipeline")
+        }!
+    }
 }
 
 class VulkanState {
@@ -378,8 +569,11 @@ class VulkanState {
 
     let allocator: VmaAllocator
 
+    var swapChainSurfaceFormat: VkSurfaceFormatKHR
     var swapChain: VkSwapchainKHR
+    var swapChainExtent: VkExtent2D
     var swapChainImages: [VkImage]
+    var swapChainImageViews: [VkImageView]
 
     init(waylandDisplay: Display, waylandSurface: Surface) {
         instance = createInstance()
@@ -398,7 +592,7 @@ class VulkanState {
         allocator = createVMA(
             instance: instance, physicalDevice: physicalDevice, logicalDevice: device)
 
-        swapChain = createSwapChain(
+        let (swapChain, swapChainSurfaceFormat, extent) = createSwapChain(
             surface: surface,
             physicalDevice: physicalDevice,
             logicalDevice: device,
@@ -406,13 +600,27 @@ class VulkanState {
             indices: families
         )
 
+        self.swapChain = swapChain
+        self.swapChainSurfaceFormat = swapChainSurfaceFormat
+        self.swapChainExtent = extent
+
         swapChainImages = Vulkan.getArray(of: VkImage?.self) { [device, swapChain] count, arr in
             vkGetSwapchainImagesKHR(device, swapChain, count, arr)
         }.unwrapPointer()
+
+        swapChainImageViews = createImageViews(
+            device: device, swapChainImages: swapChainImages,
+            swapChainSurfaceFormat: swapChainSurfaceFormat)
+
+        createGraphicsPipeline(
+            device: device,
+            swapChainExtent: extent,
+            surfaceFormat: swapChainSurfaceFormat
+        )
     }
 
     func resize(to: SIMD2<UInt32>) {
-        swapChain = createSwapChain(
+        let c = createSwapChain(
             surface: surface,
             physicalDevice: physicalDevice,
             logicalDevice: device,
@@ -420,6 +628,9 @@ class VulkanState {
             indices: families,
             oldSwapchain: swapChain
         )
+
+        self.swapChain = c.swapChain
+        self.swapChainSurfaceFormat = c.surfaceFormat
     }
 
     consuming func destroy() {
