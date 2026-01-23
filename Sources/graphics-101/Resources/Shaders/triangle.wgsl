@@ -22,10 +22,10 @@ struct FragmentInput {
 @vertex
 fn vtx_main(@builtin(vertex_index) vertex_index : u32) -> VertexOutput {
 
-  return VertexOutput(vec4(pos[vertex_index], 0, 0), color[vertex_index]);
+  return VertexOutput(vec4(pos[vertex_index], 0, 1.0), color[vertex_index]);
 }
 
 @fragment
 fn frag_main(input: FragmentInput) -> @location(0) vec4f {
-  return vec4(input.color, 0);
+  return vec4(input.color, 1.0);
 }

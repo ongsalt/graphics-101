@@ -30,6 +30,8 @@ struct Graphics101 {
         let renderLoop = RenderLoop(state: vulkanState)
         renderLoop.run()
 
+        // window.show()
+
         print("done")
 
         RunLoop.main.run()

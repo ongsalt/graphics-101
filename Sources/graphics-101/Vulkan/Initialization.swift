@@ -294,7 +294,7 @@ private func createGraphicsPipeline(device: VkDevice, swapChain: SwapChain) -> V
     let inputAssemblyCI = Box(VkPipelineInputAssemblyStateCreateInfo()) {
         $0.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO
         $0.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
-        $0.primitiveRestartEnable = false
+        // $0.primitiveRestartEnable = false
     }
 
     let viewport = Box(
@@ -338,7 +338,7 @@ private func createGraphicsPipeline(device: VkDevice, swapChain: SwapChain) -> V
         rasterizer.polygonMode = VK_POLYGON_MODE_FILL
         rasterizer.lineWidth = 1.0
 
-        // rasterizer.cullMode = VK_CULL_MODE_BACK_BIT.rawValue
+        rasterizer.cullMode = VK_CULL_MODE_NONE.rawValue
         // rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE
 
         // rasterizer.depthBiasEnable = false
@@ -358,12 +358,12 @@ private func createGraphicsPipeline(device: VkDevice, swapChain: SwapChain) -> V
                 | VK_COLOR_COMPONENT_B_BIT.rawValue | VK_COLOR_COMPONENT_A_BIT.rawValue
         )
         $0.blendEnable = true
-        $0.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA
-        $0.dstColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA
+        $0.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA
+        $0.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA
         $0.colorBlendOp = VK_BLEND_OP_ADD
         $0.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE
-        // $0.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO
-        $0.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA
+        $0.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO
+        // $0.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA
         $0.alphaBlendOp = VK_BLEND_OP_ADD
     }
 
@@ -387,7 +387,8 @@ private func createGraphicsPipeline(device: VkDevice, swapChain: SwapChain) -> V
             setLayoutCount: 0,
             pSetLayouts: nil,
             pushConstantRangeCount: 0,
-            pPushConstantRanges: pushConstantRange.ptr
+            pPushConstantRanges: nil
+            // pPushConstantRanges: pushConstantRange.ptr
         ))
 
     let pipelineLayout = with(VkPipelineLayout(bitPattern: 0)) {
