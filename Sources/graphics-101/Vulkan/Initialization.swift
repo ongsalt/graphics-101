@@ -264,137 +264,7 @@ private func createVMA(
     return allocator!
 }
 
-private func chooseSwapSurfaceFormat(from availableFormats: [VkSurfaceFormatKHR])
-    -> VkSurfaceFormatKHR
-{
-    return availableFormats.first {
-        $0.format == VK_FORMAT_B8G8R8A8_SRGB && $0.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
-    } ?? availableFormats[0]
-}
-
-// TODO: allow vsync toggle
-private func chooseSwapPresentMode(from availablePresentModes: [VkPresentModeKHR])
-    -> VkPresentModeKHR
-{
-    return availablePresentModes.contains(VK_PRESENT_MODE_MAILBOX_KHR)
-        ? VK_PRESENT_MODE_MAILBOX_KHR
-        : VK_PRESENT_MODE_FIFO_KHR
-}
-
-private func chooseSwapExtent(capabilities: VkSurfaceCapabilitiesKHR, preferredSize: SIMD2<UInt32>)
-    -> VkExtent2D
-{
-    if capabilities.currentExtent.width != UInt32.max {
-        return capabilities.currentExtent
-    }
-
-    let width = preferredSize.x
-    let height = preferredSize.y
-
-    let actualExtent = VkExtent2D(
-        width: width.clamp(
-            to: capabilities.minImageExtent.width...capabilities.maxImageExtent.width),
-        height: height.clamp(
-            to: capabilities.minImageExtent.height...capabilities.maxImageExtent.height)
-    )
-
-    return actualExtent
-}
-
-private func createSwapChain(
-    surface: VkSurfaceKHR,
-    physicalDevice: VkPhysicalDevice,
-    logicalDevice device: VkDevice,
-    preferredSize: SIMD2<UInt32>,
-    indices: SelectedQueuesIndices,
-    oldSwapchain: VkSwapchainKHR? = nil
-) -> (swapChain: VkSwapchainKHR, surfaceFormat: VkSurfaceFormatKHR, extent: VkExtent2D) {
-    let supportDetails = SwapChainSupportDetails(
-        physicalDevice: physicalDevice,
-        surface: surface
-    )
-
-    let surfaceFormat = chooseSwapSurfaceFormat(from: supportDetails.formats)
-    let presentMode = chooseSwapPresentMode(from: supportDetails.presentModes)
-    let extent = chooseSwapExtent(
-        capabilities: supportDetails.capabilities, preferredSize: preferredSize)
-
-    // print(supportDetails.formats)
-    let surfaceCaps = supportDetails.capabilities
-
-    let queueFamilyIndices = [indices.graphicsFamily!, indices.presentFamily!].map { UInt32($0) }
-    let swapChain = queueFamilyIndices.withUnsafeBufferPointer { queueFamilyIndices in
-        let swapchainCI = Box(VkSwapchainCreateInfoKHR())
-        swapchainCI[].sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR
-        swapchainCI[].surface = surface
-        swapchainCI[].minImageCount = surfaceCaps.minImageCount
-        swapchainCI[].imageFormat = surfaceFormat.format
-        swapchainCI[].imageColorSpace = surfaceFormat.colorSpace
-        swapchainCI[].imageExtent = extent
-        swapchainCI[].imageArrayLayers = 1
-        swapchainCI[].imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT.rawValue
-        swapchainCI[].presentMode = presentMode
-
-        swapchainCI[].preTransform = supportDetails.capabilities.currentTransform
-        swapchainCI[].compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR
-        swapchainCI[].clipped = true
-
-        if indices.graphicsFamily != indices.presentFamily {
-            swapchainCI[].imageSharingMode = VK_SHARING_MODE_CONCURRENT
-            swapchainCI[].queueFamilyIndexCount = 2
-
-            swapchainCI[].pQueueFamilyIndices = queueFamilyIndices.baseAddress
-        } else {
-            swapchainCI[].imageSharingMode = VK_SHARING_MODE_EXCLUSIVE
-            swapchainCI[].queueFamilyIndexCount = 0  // Optional
-            swapchainCI[].pQueueFamilyIndices = nil  // Optional
-        }
-
-        // TODO: specify this
-        swapchainCI[].oldSwapchain = oldSwapchain
-
-        var swapChain: VkSwapchainKHR? = VkSwapchainKHR(bitPattern: 0)
-        vkCreateSwapchainKHR(device, swapchainCI.ptr, nil, &swapChain).expect(
-            "Cannot create swapchain")
-
-        return swapChain!
-    }
-
-    return (swapChain, surfaceFormat, extent)
-}
-
-func createImageViews(
-    device: VkDevice, swapChainImages: [VkImage], swapChainSurfaceFormat: VkSurfaceFormatKHR
-) -> [VkImageView] {
-    var swapChainImageViews = Array(
-        repeating: VkImageView(bitPattern: 0), count: swapChainImages.count)
-
-    for (i, image) in swapChainImages.enumerated() {
-        var createInfo = VkImageViewCreateInfo()
-        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO
-        createInfo.image = image
-        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D
-        createInfo.format = swapChainSurfaceFormat.format
-
-        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY
-        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY
-        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY
-        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY
-
-        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT.rawValue
-        createInfo.subresourceRange.baseMipLevel = 0
-        createInfo.subresourceRange.levelCount = 1
-        createInfo.subresourceRange.baseArrayLayer = 0
-        createInfo.subresourceRange.layerCount = 1
-
-        vkCreateImageView(device, &createInfo, nil, &swapChainImageViews[i]).expect(
-            "Cannot create image view")
-    }
-
-    return swapChainImageViews.map { $0! }
-}
-
-private func createGraphicsPipeline(device: VkDevice, swapChainExtent: VkExtent2D, surfaceFormat: VkSurfaceFormatKHR) {
+private func createGraphicsPipeline(device: VkDevice, swapChain: SwapChain) -> VkPipeline {
     let shader = try! Shader(filename: "triangle", device: device)
 
     var vertCi = VkPipelineShaderStageCreateInfo()
@@ -431,8 +301,8 @@ private func createGraphicsPipeline(device: VkDevice, swapChainExtent: VkExtent2
         VkViewport(
             x: 0,
             y: 0,
-            width: Float(swapChainExtent.width),
-            height: Float(swapChainExtent.height),
+            width: Float(swapChain.extent.width),
+            height: Float(swapChain.extent.height),
             minDepth: 0,
             maxDepth: 1
         ))
@@ -440,7 +310,7 @@ private func createGraphicsPipeline(device: VkDevice, swapChainExtent: VkExtent2
     let scissor = Box(
         VkRect2D(
             offset: VkOffset2D(x: 0, y: 0),
-            extent: swapChainExtent
+            extent: swapChain.extent
         ))
 
     let viewportCI = Box(VkPipelineViewportStateCreateInfo()) {
@@ -516,7 +386,7 @@ private func createGraphicsPipeline(device: VkDevice, swapChainExtent: VkExtent2
             flags: VkPipelineLayoutCreateFlags(),
             setLayoutCount: 0,
             pSetLayouts: nil,
-            pushConstantRangeCount: 1,
+            pushConstantRangeCount: 0,
             pPushConstantRanges: pushConstantRange.ptr
         ))
 
@@ -525,7 +395,7 @@ private func createGraphicsPipeline(device: VkDevice, swapChainExtent: VkExtent2
             "Cannot create pipeline layout")
     }
 
-    let imageFormat = Box(surfaceFormat.format)
+    let imageFormat = Box(swapChain.surfaceFormat.format)
     // Dynamic rendering
     let renderingCI = Box(VkPipelineRenderingCreateInfo()) {
         $0.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO
@@ -534,7 +404,7 @@ private func createGraphicsPipeline(device: VkDevice, swapChainExtent: VkExtent2
         // $0.depthAttachmentFormat = depthFormat
     }
 
-    shaderStages.withUnsafeBufferPointer { shaderStages in
+    let pipeline = shaderStages.withUnsafeBufferPointer { shaderStages in
         var pipelineCI = with(VkGraphicsPipelineCreateInfo()) {
             $0.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO
             $0.pNext = renderingCI.raw
@@ -554,7 +424,11 @@ private func createGraphicsPipeline(device: VkDevice, swapChainExtent: VkExtent2
             vkCreateGraphicsPipelines(device, nil, 1, &pipelineCI, nil, &$0).expect(
                 "Cannot create pipeline")
         }!
+
+        return pipeline
     }
+
+    return pipeline
 }
 
 class VulkanState {
@@ -566,14 +440,14 @@ class VulkanState {
     let families: SelectedQueuesIndices
     let graphicsQueue: VkQueue
     let presentQueue: VkQueue
+    let pipeline: VkPipeline
+    let commandPool: VkCommandPool
+    let commandBuffers: [VkCommandBuffer]
+    let maxFramesInFlight: UInt32 = 2
+
+    let swapChain: SwapChain
 
     let allocator: VmaAllocator
-
-    var swapChainSurfaceFormat: VkSurfaceFormatKHR
-    var swapChain: VkSwapchainKHR
-    var swapChainExtent: VkExtent2D
-    var swapChainImages: [VkImage]
-    var swapChainImageViews: [VkImageView]
 
     init(waylandDisplay: Display, waylandSurface: Surface) {
         instance = createInstance()
@@ -589,55 +463,71 @@ class VulkanState {
         self.presentQueue = c.presentQueue
         self.device = c.device
 
+        let graphicsFamilyIndex = UInt32(families.graphicsFamily!)
+
         allocator = createVMA(
             instance: instance, physicalDevice: physicalDevice, logicalDevice: device)
 
-        let (swapChain, swapChainSurfaceFormat, extent) = createSwapChain(
+        self.swapChain = SwapChain(
             surface: surface,
             physicalDevice: physicalDevice,
             logicalDevice: device,
-            preferredSize: SIMD2(800, 600),
-            indices: families
+            families: families
         )
 
-        self.swapChain = swapChain
-        self.swapChainSurfaceFormat = swapChainSurfaceFormat
-        self.swapChainExtent = extent
-
-        swapChainImages = Vulkan.getArray(of: VkImage?.self) { [device, swapChain] count, arr in
-            vkGetSwapchainImagesKHR(device, swapChain, count, arr)
-        }.unwrapPointer()
-
-        swapChainImageViews = createImageViews(
-            device: device, swapChainImages: swapChainImages,
-            swapChainSurfaceFormat: swapChainSurfaceFormat)
-
-        createGraphicsPipeline(
+        pipeline = createGraphicsPipeline(
             device: device,
-            swapChainExtent: extent,
-            surfaceFormat: swapChainSurfaceFormat
-        )
-    }
-
-    func resize(to: SIMD2<UInt32>) {
-        let c = createSwapChain(
-            surface: surface,
-            physicalDevice: physicalDevice,
-            logicalDevice: device,
-            preferredSize: SIMD2(800, 600),
-            indices: families,
-            oldSwapchain: swapChain
+            swapChain: swapChain
         )
 
-        self.swapChain = c.swapChain
-        self.swapChainSurfaceFormat = c.surfaceFormat
+        let (pool, cmdBuffer) = VulkanState.createCommandPool(
+            device: device, queueFamilyIndex: graphicsFamilyIndex, swapChain: swapChain)
+        self.commandPool = pool
+        self.commandBuffers = cmdBuffer
     }
 
     consuming func destroy() {
-        vkDestroySwapchainKHR(device, swapChain, nil)
+        commandBuffers.withUnsafeBufferPointer {
+            vkFreeCommandBuffers(
+                device, commandPool, UInt32($0.count),
+                UnsafeMutablePointer(OpaquePointer($0.baseAddress)))
+        }
+        vkDestroyCommandPool(device, commandPool, nil)
+        swapChain.destroy()
         vkDestroySurfaceKHR(instance, surface, nil)
         vkDestroyDevice(device, nil)
         vkDestroyInstance(instance, nil)
+    }
+
+    private static func createCommandPool(
+        device: VkDevice, queueFamilyIndex: UInt32, swapChain: SwapChain
+    )
+        -> (VkCommandPool, [VkCommandBuffer])
+    {
+        let commandPoolCI = Box(VkCommandPoolCreateInfo()) {
+            $0.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO
+            $0.flags = VkCommandPoolCreateFlags(
+                VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT.rawValue
+            )
+            $0.queueFamilyIndex = queueFamilyIndex
+        }
+
+        let commandPool = with(VkCommandPool(bitPattern: 0)) {
+            vkCreateCommandPool(device, commandPoolCI.ptr, nil, &$0).unwrap()
+        }!
+
+        var commandBuffers = Array(
+            repeating: VkCommandBuffer(bitPattern: 0), count: Int(swapChain.framesInFlightCount))
+
+        let cbAllocCI = Box(VkCommandBufferAllocateInfo()) { [commandPool, swapChain] in
+            $0.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO
+            $0.commandPool = commandPool
+            $0.commandBufferCount = UInt32(swapChain.framesInFlightCount)
+        }
+
+        vkAllocateCommandBuffers(device, cbAllocCI.ptr, &commandBuffers).unwrap()
+
+        return (commandPool, commandBuffers.unwrapPointer())
     }
 
     deinit {

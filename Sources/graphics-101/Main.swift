@@ -5,9 +5,6 @@ import Wayland
 @main
 struct Graphics101 {
     static func main() throws {
-        let u2 = Bundle.module.url(forResource: "triangle", withExtension: "spv", subdirectory: "Compiled")!
-        print(u2)
-
         let instance = Graphics101()
         try instance.run()
     }
@@ -29,6 +26,11 @@ struct Graphics101 {
             waylandDisplay: display,
             waylandSurface: window.surface
         )
+
+        let renderLoop = RenderLoop(state: vulkanState)
+        renderLoop.run()
+
+        print("done")
 
         RunLoop.main.run()
         _ = consume token

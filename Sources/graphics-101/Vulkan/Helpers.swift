@@ -27,7 +27,9 @@ extension VkResult {
 
     func expect(_ message: String) {
         if self != VK_SUCCESS {
-            fatalError("\(message), code: \(self.rawValue)")
+            let m = "\(message), code: \(self.rawValue)"
+            print("Fatal error: \(m)")
+            fatalError(m)
         }
     }
 
