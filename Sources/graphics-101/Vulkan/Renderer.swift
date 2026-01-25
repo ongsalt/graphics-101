@@ -48,13 +48,20 @@ class Renderer {
         }
     }
 
-    func perform(_ block: (VkCommandBuffer, SwapChain) -> Void) {
-        Logger.info(.renderLoop, "perform 1 pass")
+    func perform(blocking: Bool = false, _ block: (VkCommandBuffer, SwapChain) -> Void) -> Bool {
+        // Logger.info(.renderLoop, "perform 1 pass")
         let swapChain = state.swapChain
         let frameIndex = swapChain.frameIndex
 
         // TODO: epoll/DispatchSource.makeReadSource
-        swapChain.waitForFence(frameIndex: frameIndex)
+        if blocking {
+            // swapChain.waitForFence(frameIndex: frameIndex)
+        } else {
+            if !swapChain.isFenceCompleted(frameIndex: frameIndex) {
+                return false
+            }
+            swapChain.resetFence(frameIndex: frameIndex)
+        }
 
         let (image, imageView, imageIndex) = swapChain.acquireNextImage()
 
@@ -190,5 +197,6 @@ class Renderer {
         // recreate swapchain ????
 
         swapChain.frameIndex = (swapChain.frameIndex + 1) % swapChain.framesInFlightCount
+        return true
     }
 }
