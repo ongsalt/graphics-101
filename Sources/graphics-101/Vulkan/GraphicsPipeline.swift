@@ -120,8 +120,8 @@ class GraphicsPipeline {
             $0.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA
             $0.colorBlendOp = VK_BLEND_OP_ADD
             $0.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE
-            $0.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO
-            // $0.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA
+            // $0.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO
+            $0.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA
             $0.alphaBlendOp = VK_BLEND_OP_ADD
         }
 
