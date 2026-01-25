@@ -17,12 +17,13 @@ wayland-scanner client-header < /usr/share/wayland-protocols/staging/xdg-topleve
 ## Shader compiler
 use [naga](https://github.com/gfx-rs/wgpu/tree/trunk/naga) to compile wgsl to spirv
 
+ok, it doesnt support push constant, use glslc instead
+
 ## TODO
-- BUFFER LIFETIME
 - clip
 - stop using Observation framework becuase no untrack
 - concurrency safe signal
-- raphlinus's rounded rect shader
+- think about pixel perfect stuff
 - distance field of composited(?) shape
 
 ## Note

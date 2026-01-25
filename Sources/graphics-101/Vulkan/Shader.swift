@@ -9,9 +9,9 @@ class Shader {
 
     init(filename: String, device: VkDevice) throws {
         self.device = device
+        let parts = filename.split(separator: ".")
 
-        let url = Bundle.module.url(
-            forResource: filename, withExtension: "spv", subdirectory: "Compiled")!
+        let url = Bundle.module.url(forResource: "Compiled/\(filename)", withExtension: nil)!
 
         let shaderData = try Data(contentsOf: url)
 

@@ -4,30 +4,35 @@ import Wayland
 
 class GraphicsPipeline {
     let pipeline: VkPipeline
+    let pipelineLayout: VkPipelineLayout
+    let descriptorSetLayout: VkDescriptorSetLayout
+    let device: VkDevice
 
     init(
         device: VkDevice,
         swapChain: SwapChain,
-        shader: Shader,
-        vertexEntry: String = "vtx_main",
-        fragmentEntry: String = "frag_main",
+        vertexShader: Shader,
+        fragmentShader: Shader,
+        vertexEntry: String = "main",
+        fragmentEntry: String = "main",
         // source texture, target texture
         binding: BindingInfo = .none
             // blending
 
             // wgpu is a lot nicer
     ) {
+        self.device = device
         var vertCi = VkPipelineShaderStageCreateInfo()
         vertCi.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO
         vertCi.stage = VK_SHADER_STAGE_VERTEX_BIT
-        vertCi.module = shader.shaderModule
+        vertCi.module = vertexShader.shaderModule
         let vertName = CString(vertexEntry)
         vertCi.pName = vertName.ptr
 
         var fragCi = VkPipelineShaderStageCreateInfo()
         fragCi.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO
         fragCi.stage = VK_SHADER_STAGE_FRAGMENT_BIT
-        fragCi.module = shader.shaderModule
+        fragCi.module = fragmentShader.shaderModule
         let fragName = CString(fragmentEntry)
         fragCi.pName = fragName.ptr
 
@@ -132,22 +137,42 @@ class GraphicsPipeline {
             $0.blendConstants.3 = 0.0
         }
 
-        let pipelineLayoutCI = Box(
-            VkPipelineLayoutCreateInfo(
-                sType: VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-                pNext: nil,
-                flags: VkPipelineLayoutCreateFlags(),
-                setLayoutCount: 0,
-                pSetLayouts: nil,
-                pushConstantRangeCount: 0,
-                pPushConstantRanges: nil
-                    // pPushConstantRanges: pushConstantRange.ptr
-            ))
+        let layoutBinding = Box(VkDescriptorSetLayoutBinding()) {
+            $0.binding = 0
+            $0.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+            $0.descriptorCount = 1
+            $0.stageFlags =
+                VK_SHADER_STAGE_VERTEX_BIT.rawValue | VK_SHADER_STAGE_FRAGMENT_BIT.rawValue
+        }
+
+        var descriptorSetLayoutCI = with(VkDescriptorSetLayoutCreateInfo()) {
+            $0.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO
+            $0.bindingCount = 1
+            $0.pBindings = layoutBinding.readonly
+        }
+
+        let descriptorSetLayout = Box(VkDescriptorSetLayout(bitPattern: 0)) {
+            vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCI, nil, &$0).unwrap()
+        }
+
+        let pushConstantRange = Box(VkPushConstantRange()) {
+            $0.stageFlags = VK_SHADER_STAGE_VERTEX_BIT.rawValue
+            $0.size = UInt32(MemoryLayout<VkDeviceAddress>.size)
+        }
+
+        var pipelineLayoutCI = with(VkPipelineLayoutCreateInfo()) {
+            $0.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
+            $0.setLayoutCount = 1
+            $0.pSetLayouts = descriptorSetLayout.readonly
+            $0.pushConstantRangeCount = 1
+            $0.pPushConstantRanges = pushConstantRange.readonly
+        }
 
         let pipelineLayout = with(VkPipelineLayout(bitPattern: 0)) {
-            vkCreatePipelineLayout(device, pipelineLayoutCI.ptr, nil, &$0).expect(
+            vkCreatePipelineLayout(device, &pipelineLayoutCI, nil, &$0).expect(
                 "Cannot create pipeline layout")
         }
+        self.pipelineLayout = pipelineLayout!
 
         let dynamicStates = [VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR]
 
@@ -194,9 +219,15 @@ class GraphicsPipeline {
         }
 
         self.pipeline = pipeline
+        self.descriptorSetLayout = descriptorSetLayout.pointee!
     }
 
     func bind(commandBuffer: VkCommandBuffer) {
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, self.pipeline)
     }
+
+    deinit {
+        vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nil)
+    }
+
 }

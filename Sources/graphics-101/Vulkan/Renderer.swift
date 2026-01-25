@@ -15,10 +15,14 @@ class Renderer {
     }
 
     func performBs() {
+        let shader = try! Shader(filename: "triangle.spv", device: state.device)
         let pipeline = GraphicsPipeline(
             device: state.device,
             swapChain: state.swapChain,
-            shader: try! Shader(filename: "triangle", device: state.device)
+            vertexShader: shader,
+            fragmentShader: shader,
+            vertexEntry: "vtx_main",
+            fragmentEntry: "frag_main",
         )
 
         perform { commandBuffer, swapChain in

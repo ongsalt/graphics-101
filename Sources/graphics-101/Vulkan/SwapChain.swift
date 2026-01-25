@@ -22,13 +22,14 @@ final class SwapChain {
         physicalDevice: VkPhysicalDevice,
         logicalDevice device: VkDevice,
         families: SelectedQueuesIndices,
+        preferredSize: SIMD2<UInt32> = SIMD2(800, 600)
     ) {
         self.device = device
         let (swapChain, swapChainSurfaceFormat, extent) = Self.createSwapChain(
             surface: surface,
             physicalDevice: physicalDevice,
             logicalDevice: device,
-            preferredSize: SIMD2(800, 600),
+            preferredSize: preferredSize,
             indices: families
         )
 

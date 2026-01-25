@@ -4,25 +4,53 @@ import Wayland
 
 class GPUBuffer<BufferData> {
     let mapped: UnsafeMutableBufferPointer<BufferData>
+    let deviceAddress: VkDeviceAddress
     private let vmaAllocator: VmaAllocator
     private let vmaAllocation: VmaAllocation
     // this is to please the ffi
     var buffer: VkBuffer?
 
-    var count: Int {
+    var capacity: Int {
         mapped.count
     }
 
+    convenience init(
+        indexBuffer data: [UInt32], allocator: VmaAllocator, device: VkDevice, count: Int? = nil
+    ) where BufferData == UInt32 {
+        self.init(
+            data: data, allocator: allocator, device: device, count: count ?? 1024 * 16,
+            usages: VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
+    }
+
+    convenience init(
+        vertexBuffer data: [BufferData], allocator: VmaAllocator, device: VkDevice,
+        count: Int? = nil
+    ) {
+        self.init(
+            data: data, allocator: allocator, device: device, count: count,
+            usages: VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+    }
+
     // we should pass usages too
-    convenience init(data: [BufferData], allocator: VmaAllocator, device: VkDevice, count: Int? = nil) {
-        self.init(of: BufferData.self, allocator: allocator, device: device, count: count ?? data.count)
+    convenience init(
+        data: [BufferData], allocator: VmaAllocator, device: VkDevice, count: Int? = nil,
+        usages: VkBufferUsageFlagBits? = nil
+    ) {
+        self.init(
+            of: BufferData.self, allocator: allocator, device: device, count: count ?? data.count,
+            usages: usages)
 
         self.mapped.initialize(from: data)
     }
 
     // Create this per frame in flight
-    // TODO: resize it
-    init(of: BufferData.Type, allocator: VmaAllocator, device: VkDevice, count: Int? = nil) {
+    init(
+        of: BufferData.Type,
+        allocator: VmaAllocator,
+        device: VkDevice,
+        count: Int? = nil,
+        usages: VkBufferUsageFlagBits? = nil
+    ) {
         // well, its ~11 f32 -> ~ 64 byte each * 1000 vertex = 64Kb
         // fuck, just do 1mb
         let count = count ?? ((1024 * 1024) / MemoryLayout<BufferData>.size)
@@ -33,7 +61,8 @@ class GPUBuffer<BufferData> {
             pNext: nil,
             flags: 0,
             size: UInt64(size),
-            usage: VK_BUFFER_USAGE_VERTEX_BUFFER_BIT.rawValue | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT.rawValue,
+            usage: (usages?.rawValue ?? 0)
+                | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT.rawValue,
             sharingMode: VK_SHARING_MODE_EXCLUSIVE,
             queueFamilyIndexCount: 0,
             pQueueFamilyIndices: nil
@@ -64,10 +93,21 @@ class GPUBuffer<BufferData> {
         let swiftBuffer = UnsafeMutableBufferPointer(
             start: mapped!.assumingMemoryBound(to: BufferData.self), count: count)
 
+        var uBufferBdaInfo = with(VkBufferDeviceAddressInfo()) {
+            $0.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO
+            $0.buffer = buffer
+        }
+
+
+        self.deviceAddress = vkGetBufferDeviceAddress(device, &uBufferBdaInfo)
         self.mapped = swiftBuffer
         self.buffer = buffer!
         self.vmaAllocation = allocation!
         self.vmaAllocator = allocator
+    }
+
+    func set(_ data: [BufferData]) {
+        mapped.initialize(from: data)
     }
 
     deinit {

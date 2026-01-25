@@ -26,21 +26,33 @@ struct Graphics101 {
             waylandSurface: window.surface
         )
 
-        let vertexData: [RoundedRectangleShaderData] = [
-            // TODO: this should produce 4 point, 6 index
-            .init(
-                vertexColor: Color.blue, center: (0.4, 0.4), size: (0.2, 0.3), borderRadius: 0.1,
-                rotation: 0, isFirstHalf: 0),
-            .init(
-                vertexColor: Color.blue, center: (0.6, 0.6), size: (0.2, 0.3), borderRadius: 0.1,
-                rotation: 0, isFirstHalf: 0),
-            .init(
-                vertexColor: Color.blue, center: (0.6, 0.4), size: (0.2, 0.3), borderRadius: 0.1,
-                rotation: 0, isFirstHalf: 0),
-        ]
+        // let uniformBuffer: GPUBuffer<UInt32> = GPUBuffer(
+        //     data: [800, 600],
+        //     allocator: vulkanState.allocator,
+        //     device: vulkanState.device,
+        //     count: 2,
+        //     usages: VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+        // )
 
+        // func updateUBO() {
+        //     uniformBuffer.set([800, 600])
+        // }
+        var uboBruh: (Float, Float) = (800, 600)
+
+        let (vertexData, indexes) = RoundedRectangleDrawCommand(
+            color: Color.blue,
+            center: SIMD2(400, 300),
+            size: SIMD2(160, 120),
+            borderRadius: 0,
+            rotation: 0,
+            isFirstHalf: 0
+        ).toVertexData()
+
+        // we should pool it
         let buffer = GPUBuffer(
-            data: vertexData, allocator: vulkanState.allocator, device: vulkanState.device)
+            vertexBuffer: vertexData, allocator: vulkanState.allocator, device: vulkanState.device)
+        let indexBuffer = GPUBuffer(
+            indexBuffer: indexes, allocator: vulkanState.allocator, device: vulkanState.device)
 
         let renderer = Renderer(state: vulkanState)
         // renderer.performBs()
@@ -48,7 +60,8 @@ struct Graphics101 {
         let pipeline = GraphicsPipeline(
             device: vulkanState.device,
             swapChain: vulkanState.swapChain,
-            shader: try Shader(filename: "rounded_rectangle", device: vulkanState.device),
+            vertexShader: try Shader(filename: "rounded_rectangle.vert.spv", device: vulkanState.device),
+            fragmentShader: try Shader(filename: "rounded_rectangle.frag.spv", device: vulkanState.device),
             binding: .init(
                 bindingDescriptions: [RoundedRectangleShaderData.bindingDescriptions],
                 attributeDescriptions: RoundedRectangleShaderData.attributeDescriptions
@@ -57,30 +70,58 @@ struct Graphics101 {
 
         // renderer.performBs()
 
-        renderer.perform { commandBuffer, swapChain in
-            var viewport = VkViewport(
-                x: 0,
-                y: 0,
-                width: Float(swapChain.extent.width),
-                height: Float(swapChain.extent.height),
-                minDepth: 0.0,
-                maxDepth: 1.0
-            )
-            vkCmdSetViewport(commandBuffer, 0, 1, &viewport)
+        func render() {
+            renderer.perform { commandBuffer, swapChain in
+                var viewport = VkViewport(
+                    x: 0,
+                    y: 0,
+                    width: Float(swapChain.extent.width),
+                    height: Float(swapChain.extent.height),
+                    minDepth: 0.0,
+                    maxDepth: 1.0
+                )
+                vkCmdSetViewport(commandBuffer, 0, 1, &viewport)
 
-            var scissor = VkRect2D(
-                offset: VkOffset2D(x: 0, y: 0),
-                extent: swapChain.extent
-            )
-            vkCmdSetScissor(commandBuffer, 0, 1, &scissor)
+                var scissor = VkRect2D(
+                    offset: VkOffset2D(x: 0, y: 0),
+                    extent: swapChain.extent
+                )
+                vkCmdSetScissor(commandBuffer, 0, 1, &scissor)
 
-            var offsets: [UInt64] = [0]
-            pipeline.bind(commandBuffer: commandBuffer)
+                var offsets: [UInt64] = [0]
+                pipeline.bind(commandBuffer: commandBuffer)
 
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &buffer.buffer, &offsets)
+                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &buffer.buffer, &offsets)
+                vkCmdBindIndexBuffer(commandBuffer, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32)
 
-            vkCmdDraw(commandBuffer, 3, 1, 0, 0)
+                // 2. Bind the descriptor set inside your command buffer recording loop
+                // vkCmdBindDescriptorSets(
+                //     commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                //     pipeline.pipelineLayout, 0, 1, descriptorSet, 0, nil)
+
+                vkCmdPushConstants(
+                    commandBuffer, pipeline.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT.rawValue, 0,
+                    UInt32(MemoryLayout<(Float, Float)>.size), &uboBruh
+                )
+
+                vkCmdDrawIndexed(commandBuffer, UInt32(indexes.count), 1, 0, 0, 0)
+            }
         }
+
+        // launchCounter()
+        render()
+        // func queueRender() {
+        //     let id = UUID()
+        //     Logger.info(.renderLoop, "Queing render \(id)")
+        //     DispatchQueue.main.async {
+        //         render()
+        //         // wait for it to finish
+        //         Logger.info(.renderLoop, "completed \(id)")
+        //         queueRender()
+        //     }
+        // }
+
+        // queueRender()
 
         RunLoop.main.run()
         drop(token)
