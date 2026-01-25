@@ -26,18 +26,17 @@ struct Graphics101 {
             waylandSurface: window.surface
         )
 
-        // let uniformBuffer: GPUBuffer<UInt32> = GPUBuffer(
-        //     data: [800, 600],
-        //     allocator: vulkanState.allocator,
-        //     device: vulkanState.device,
-        //     count: 2,
-        //     usages: VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
-        // )
+        let uniformBuffer: GPUBuffer<Float32> = GPUBuffer(
+            data: [800, 600],
+            allocator: vulkanState.allocator,
+            device: vulkanState.device,
+            count: 2,
+            usages: VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+        )
 
-        // func updateUBO() {
-        //     uniformBuffer.set([800, 600])
-        // }
-        var uboBruh: (Float, Float) = (800, 600)
+        func updateUBO() {
+            uniformBuffer.set([800, 600])
+        }
 
         let (vertexData, indexes) = RoundedRectangleDrawCommand(
             color: Color.blue,
@@ -98,10 +97,10 @@ struct Graphics101 {
                 // vkCmdBindDescriptorSets(
                 //     commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                 //     pipeline.pipelineLayout, 0, 1, descriptorSet, 0, nil)
-
+                var address = uniformBuffer.deviceAddress
                 vkCmdPushConstants(
                     commandBuffer, pipeline.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT.rawValue, 0,
-                    UInt32(MemoryLayout<(Float, Float)>.size), &uboBruh
+                    UInt32(MemoryLayout<VkDeviceAddress>.size), &address
                 )
 
                 vkCmdDrawIndexed(commandBuffer, UInt32(indexes.count), 1, 0, 0, 0)
