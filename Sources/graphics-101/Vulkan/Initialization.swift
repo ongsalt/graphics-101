@@ -277,7 +277,7 @@ class VulkanState {
     // let pipeline: VkPipeline
     let commandPool: VkCommandPool
     let commandBuffers: [VkCommandBuffer]
-    let maxFramesInFlight: UInt32 = 2
+    let maxFramesInFlight: UInt32 = 1
 
     let swapChain: SwapChain
 

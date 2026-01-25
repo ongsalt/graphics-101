@@ -77,6 +77,22 @@ struct Graphics101 {
             )
         )
 
+        func updateVertex() {
+            let time = sin(Date.now.timeIntervalSince1970 * 4)
+            let a = (time + 1) / 7 + 2
+            let (vertexData, indexes) = RoundedRectangleDrawCommand(
+                color: [Color.white, Color.white, Color.white, Color.white],
+                center: SIMD2(400, 300),
+                size: SIMD2(160, 120) * Float(a),
+                borderRadius: 64,
+                rotation: 0,
+                isFirstHalf: 0
+            ).toVertexData()
+
+            buffer.mapped.initialize(from: vertexData)
+            indexBuffer.mapped.initialize(from: indexes)
+        }
+
         var drawned: Int64 = 0
 
         func render() {
@@ -131,6 +147,7 @@ struct Graphics101 {
 
         func queueRender() {
             DispatchQueue.main.async(qos: .userInitiated) {
+                updateVertex()
                 render()
                 display.dispatchPending()
                 queueRender()
