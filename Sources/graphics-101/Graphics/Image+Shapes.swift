@@ -14,6 +14,21 @@ private func isInsideCircle(_ position: (Float, Float), center: (Float, Float), 
     return ((cx - x).squared() + (cy - y).squared()).squareRoot() <= radius
 }
 
+func sdfRoundedRectangle(
+    _ position: SIMD2<Float>, rect r: Rect, cornerRadius cr: Float, degree: Float = 4
+) -> Float {
+    let box = SIMD2<Float>(r.width / 2, r.height / 2) - cr
+    let center = r.center
+    let p = (position - center).abs()
+    let q = p - box
+
+    let inside = min(q.max(), 0)
+    let c = SIMD2(max(0, q.x), max(0, q.y))
+    let outside = pow(pow(c.x, degree) + pow(c.y, degree), 1 / degree) - cr
+
+    return inside + outside
+}
+
 // its not actually distance
 private func distanceFromSuperellipse(
     _ position: (Float, Float), center: (Float, Float), radius r: Float, degree: Int = 4
@@ -124,7 +139,8 @@ extension Image {
                 let index = getPixelIndex(x: x, y: y)
                 let existingColor = pixels[index]
 
-                self.pixels[index] = paint(x, y, existingColor).lerp(over: existingColor, progress: p)
+                self.pixels[index] = paint(x, y, existingColor).lerp(
+                    over: existingColor, progress: p)
             }
         }
     }
@@ -188,6 +204,7 @@ extension Image {
             region: (Int(rect.left), Int(rect.right), Int(rect.top), Int(rect.bottom)),
             subpixelCount: 4,
             where: { x, y in
+                // sdfRoundedRectangle(SIMD2(x, y), rect: rect, cornerRadius: cornerRadius) <= 0
                 isInsideRoundedRectangle((x, y), rect: rect, cornerRadius: cornerRadius)
             },
             paint: paint

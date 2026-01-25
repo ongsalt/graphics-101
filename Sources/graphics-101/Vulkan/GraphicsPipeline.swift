@@ -18,6 +18,6 @@ class GraphicsPipeline {
     }
 
     func bind(commandBuffer: VkCommandBuffer) {
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, self.pipeline)
+        // vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, self.pipeline)
     }
 }

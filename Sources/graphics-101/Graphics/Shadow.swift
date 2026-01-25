@@ -1,4 +1,5 @@
 import RealModule
+import Foundation
 
 // copied from https://www.shadertoy.com/view/4llXD7
 func sdRoundedBox(point: SIMD2<Float>, halfBox: SIMD2<Float>, cornerRadius: Float) -> Float {
@@ -30,7 +31,7 @@ extension Image {
         // TODO: better bounding
         for x: Int in x1..<x2 {
             for y: Int in y1..<y2 {
-                let d: Float = distanceFn(SIMD2<Float>(Float(x), Float(y)))
+                let d: Float = distanceFn(SIMD2<Float>(Float(x) + 0.5, Float(y) + 0.5))
                 // print(x, y, d)
                 // if d < 0 {
 
@@ -73,7 +74,7 @@ extension Image {
                 // }
 
                 self.pixels[index] = color.lerp(over: existingColor, progress: alpha)
-                // self.pixels[index] = Color(r: 0, g: 0, b: 0, a: Float(alpha))
+                // self.pixels[index] = Color.init(progress, 0, 0, 1)
             }
         }
         // pad  = blur
@@ -86,20 +87,21 @@ extension Image {
         blur: Float,
         offset: SIMD2<Float> = .zero,
     ) {
-        let halfBox = SIMD2<Float>(rect.width, rect.height) / 2
-        let center = SIMD2<Float>(rect.left, rect.top) + halfBox
+        // let halfBox = SIMD2<Float>(rect.width, rect.height) / 2
+        // let center = SIMD2<Float>(rect.left, rect.top) + halfBox
 
         drawShadow(
             region: (
-                Int(rect.left - blur),
-                Int(rect.right + blur),
-                Int(rect.top - blur),
-                Int(rect.bottom + blur),
+                Int(floor(rect.left - blur)),
+                Int(ceil(rect.right + blur)),
+                Int(floor(rect.top - blur)),
+                Int(ceil(rect.bottom + blur)),
             ),
             color: color,
             blur: blur
         ) { position in
-            sdRoundedBox(point: position - center, halfBox: halfBox, cornerRadius: cornerRadius)
+            sdfRoundedRectangle(position, rect: rect, cornerRadius: cornerRadius)
+            // sdRoundedBox(point: position - center, halfBox: halfBox, cornerRadius: cornerRadius)
         }
     }
 }

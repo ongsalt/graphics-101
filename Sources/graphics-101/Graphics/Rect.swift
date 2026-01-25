@@ -22,6 +22,10 @@ struct Rect {
         }
     }
 
+    var center: SIMD2<Float> {
+        SIMD2<Float>(left + width / 2, top + height / 2)
+    }
+
     func padded(_ amount: Float) -> Rect {
         Rect(
             top: top - amount, left: left - amount, width: width + 2 * amount,

@@ -11,6 +11,8 @@ struct Graphics101 {
     }
 
     func run() throws {
+        try runOldImpl()
+        return
         let display = try Display()
         display.monitorEvents()
         let token = RunLoop.main.addListener(on: [.beforeWaiting]) { _ in
@@ -46,7 +48,7 @@ struct Graphics101 {
 
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor)
 
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline)
+            // vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline)
             vkCmdDraw(commandBuffer, 3, 1, 0, 0)
         }
 
