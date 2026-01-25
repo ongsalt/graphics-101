@@ -20,6 +20,7 @@ use [naga](https://github.com/gfx-rs/wgpu/tree/trunk/naga) to compile wgsl to sp
 ok, it doesnt support push constant, use glslc instead
 
 ## TODO
+- command buffer/pool/whatever per frame in flight
 - clip
 - stop using Observation framework becuase no untrack
 - concurrency safe signal

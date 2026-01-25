@@ -77,17 +77,10 @@ struct Graphics101 {
             )
         )
 
-        // renderer.performBs()
+        var drawned: Int64 = 0
 
-        // we spam draw command to render thread at 120 fps first
-        // render thread will read LATEST command -> process it -> then loop
-        // or sleep until message come
-
-        let fps: Double = 90
-
-        // Task.detached {
         func render() {
-            let finished = renderer.perform { commandBuffer, swapChain in
+            let finished = renderer.perform(blocking: true) { commandBuffer, swapChain in
                 var viewport = VkViewport(
                     x: 0,
                     y: 0,
@@ -123,20 +116,43 @@ struct Graphics101 {
 
                 vkCmdDrawIndexed(commandBuffer, UInt32(indexes.count), 1, 0, 0, 0)
             }
-            
-            Logger.info(.renderLoop, "\(finished ? "finished" : "cancelled")")
+
+            if finished {
+                drawned += 1
+            }
+
+            // Logger.info(.renderLoop, "\(finished ? "finished" : "cancelled")")
         }
 
-        render()
+        launchCounter()
 
-        while true {
-            render()
+        let start = ContinuousClock.now
+        // ContiguousArray()
 
-            // bruh
-            display.dispatchPending()
-
-            RunLoop.main.limitDate(forMode: .default)
+        func queueRender() {
+            DispatchQueue.main.async(qos: .userInitiated) {
+                render()
+                display.dispatchPending()
+                queueRender()
+            }
         }
+
+        Task {
+            while !Task.isCancelled {
+                try await Task.sleep(for: .seconds(1))
+                print(
+                    "fps: \(drawned / max((ContinuousClock.now - start).components.seconds, 1))"
+                )
+            }
+        }
+
+        // while true {
+        //     render()
+        //     display.dispatchPending()
+        //     RunLoop.main.limitDate(forMode: .default)
+        // }
+
+        queueRender()
 
         RunLoop.main.run()
         drop(token)
