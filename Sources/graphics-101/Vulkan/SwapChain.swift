@@ -67,6 +67,18 @@ final class SwapChain {
         vkResetFences(device, 1, &fence).unwrap()
     }
 
+    func resetFence(frameIndex: Int) {
+        var fence: VkFence? = fences[frameIndex]
+        vkResetFences(device, 1, &fence).unwrap()
+    }
+
+    func isFenceCompleted(frameIndex: Int) -> Bool {
+        let fence = fences[frameIndex]
+        let status = vkGetFenceStatus(device, fence)
+        return status == VK_SUCCESS
+        // vkResetFences(device, 1, &fence).unwrap()
+    }
+
     consuming func destroy() {
         vkDestroySwapchainKHR(device, swapChain, nil)
     }
