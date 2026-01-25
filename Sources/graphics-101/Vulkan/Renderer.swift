@@ -55,7 +55,7 @@ class Renderer {
 
         // TODO: epoll/DispatchSource.makeReadSource
         if blocking {
-            // swapChain.waitForFence(frameIndex: frameIndex)
+            swapChain.waitForFence(frameIndex: frameIndex)
         } else {
             if !swapChain.isFenceCompleted(frameIndex: frameIndex) {
                 return false
