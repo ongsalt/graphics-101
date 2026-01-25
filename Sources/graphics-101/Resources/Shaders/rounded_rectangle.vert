@@ -14,14 +14,24 @@ layout(push_constant) uniform PushConstants {
 
 
 layout(location = 0) in vec4 inColor;
-layout(location = 1) in vec4 inSizing;
+layout(location = 1) in vec4 inSizing; // (cx,cy,w,h)
+layout(location = 2) in vec2 borderRadiusAndRotation;
 layout(location = 4) in vec2 inVertexPosition;
 
 layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec4 outSizing; // (cx,cy,w,h)
+layout(location = 2) out vec2 outBorderRadiusAndRotation;
+
+layout(location = 3) out vec2 outScreenSize;
+
 
 void main() {
-    vec2 scaled_pos = (inVertexPosition / vec2(pc.ubo.w, pc.ubo.h)) * 2.0 - 1.0;
+    outSizing = inSizing;
+    outBorderRadiusAndRotation = borderRadiusAndRotation;
+    outScreenSize = vec2(pc.ubo.w, pc.ubo.h);
     
+    vec2 scaled_pos = (inVertexPosition / vec2(pc.ubo.w, pc.ubo.h)) * 2.0 - 1.0;
+
     gl_Position = vec4(scaled_pos, 0.0, 1.0);
     outColor = inColor;
 }

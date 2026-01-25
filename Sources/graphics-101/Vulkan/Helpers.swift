@@ -5,9 +5,9 @@ extension VkBool32: @retroactive ExpressibleByBooleanLiteral {
     public init(booleanLiteral value: Bool) {
         self =
             if value {
-                1
+                VK_TRUE
             } else {
-                0
+                VK_FALSE
             }
     }
 

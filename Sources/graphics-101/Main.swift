@@ -42,7 +42,7 @@ struct Graphics101 {
             color: Color.blue,
             center: SIMD2(400, 300),
             size: SIMD2(160, 120),
-            borderRadius: 0,
+            borderRadius: 24,
             rotation: 0,
             isFirstHalf: 0
         ).toVertexData()
