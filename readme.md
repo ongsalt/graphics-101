@@ -18,6 +18,32 @@ wayland-scanner client-header < /usr/share/wayland-protocols/staging/xdg-topleve
 use [naga](https://github.com/gfx-rs/wgpu/tree/trunk/naga) to compile wgsl to spirv
 
 ## TODO
+- BUFFER LIFETIME
 - clip
 - stop using Observation framework becuase no untrack
 - concurrency safe signal
+- raphlinus's rounded rect shader
+- distance field of composited(?) shape
+
+## Note
+- query required gpu features (and optionally provide fallback)
+    - VK_EXT_blend_operation_advanced is not supported on my machine 
+- shaders: so we gonna have shit ton of shader
+    - roundedrect
+    - roundedrect (superellipse)
+    - roundedrect (squircle)
+
+### draw command recording
+- each node will emit
+1. our draw command
+2. damaged region 
+3. some other info (used in flutter)
+
+- combine damaged node draw command and other node in that region 
+- convert our draw command to vulkan's
+    - need to merge/reorder some command to minimize work
+- set scissor to damaged region
+- send it to gpu
+
+
+

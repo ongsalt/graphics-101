@@ -2,30 +2,40 @@
 import Foundation
 import Wayland
 
-class RenderLoop {
+
+class Renderer {
     let state: VulkanState
 
     init(state: VulkanState) {
         self.state = state
     }
 
-    func run() {
-        while !Task.isCancelled {
-            perform()
+    func performBs() {
+        perform { commandBuffer, swapChain in
+            var viewport = VkViewport(
+                x: 0,
+                y: 0,
+                width: Float(swapChain.extent.width),
+                height: Float(swapChain.extent.height),
+                minDepth: 0.0,
+                maxDepth: 1.0
+            )
+            vkCmdSetViewport(commandBuffer, 0, 1, &viewport)
+
+            var scissor = VkRect2D(
+                offset: VkOffset2D(x: 0, y: 0),
+                extent: swapChain.extent
+            )
+
+            vkCmdSetScissor(commandBuffer, 0, 1, &scissor)
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline)
+
+            vkCmdDraw(commandBuffer, 3, 1, 0, 0)
         }
     }
 
-    func wake() {
-
-    }
-
-    func performWhile(_ condition: () -> Bool) {
-        while condition() {
-            perform()
-        }
-    }
-
-    func perform() {
+    func perform(_ block: (VkCommandBuffer, SwapChain) -> Void) {
+        Logger.info(.renderLoop, "perform 1 pass")
         let swapChain = state.swapChain
         let frameIndex = swapChain.frameIndex
 
@@ -92,28 +102,8 @@ class RenderLoop {
         vkCmdBeginRendering(commandBuffer, renderingInfo.ptr)
 
         // Set viewport and scissor
-        var viewport = VkViewport(
-            x: 0,
-            y: 0,
-            width: Float(swapChain.extent.width),
-            height: Float(swapChain.extent.height),
-            minDepth: 0.0,
-            maxDepth: 1.0
-        )
-        vkCmdSetViewport(commandBuffer, 0, 1, &viewport)
 
-        var scissor = VkRect2D(
-            offset: VkOffset2D(x: 0, y: 0),
-            extent: swapChain.extent
-        )
-
-        vkCmdSetScissor(commandBuffer, 0, 1, &scissor)
-
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline)
-
-        // bind other stuff here
-
-        vkCmdDraw(commandBuffer, 3, 1, 0, 0)
+        block(commandBuffer, swapChain)
 
         vkCmdEndRendering(commandBuffer)
 
@@ -186,6 +176,5 @@ class RenderLoop {
         // recreate swapchain ????
 
         swapChain.frameIndex = (swapChain.frameIndex + 1) % swapChain.framesInFlightCount
-
     }
 }

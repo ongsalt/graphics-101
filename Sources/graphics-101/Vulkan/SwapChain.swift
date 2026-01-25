@@ -83,7 +83,7 @@ final class SwapChain {
         }
 
         if let format {
-            print("Picked \(format)")
+            Logger.info(.vulkan, "Picked \(format)")
         }
 
         return format ?? availableFormats[0]

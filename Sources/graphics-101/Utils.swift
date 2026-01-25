@@ -12,7 +12,6 @@ func launchCounter() -> Task<Void, any Error> {
     }
 }
 
-
 func with<T>(_ value: T, block map: (inout T) -> Void) -> T {
     var value = value
     map(&value)
@@ -22,3 +21,5 @@ func with<T>(_ value: T, block map: (inout T) -> Void) -> T {
 func run<T>(_ fn: () -> T) -> T {
     fn()
 }
+
+func drop<T>(_ value: consuming T) {}

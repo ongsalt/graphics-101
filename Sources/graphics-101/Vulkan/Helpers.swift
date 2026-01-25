@@ -81,13 +81,24 @@ struct Vulkan {
         return getArray(default: createZeroedStruct(of: T.self), fn)
     }
 
-    nonisolated static func printAvailableExtension() {
+    static func printAvailableExtension() {
         var count: UInt32 = 0
         vkEnumerateInstanceExtensionProperties(nil, &count, nil)
 
         var extensions = Array(
             repeating: VkExtensionProperties(), count: Int(count))
         vkEnumerateInstanceExtensionProperties(nil, &count, &extensions)
+
+        for var p in extensions {
+            let name = String(cStringPointer: &p)
+            print(name)
+        }
+    }
+
+    static func printAvailableDeviceExtension(physicalDevice: VkPhysicalDevice) {
+        let extensions = Vulkan.getArray(of: VkExtensionProperties.self) { count, arr in
+            vkEnumerateDeviceExtensionProperties(physicalDevice, nil, count, arr)
+        }
 
         for var p in extensions {
             let name = String(cStringPointer: &p)

@@ -264,7 +264,7 @@ private func createVMA(
     return allocator!
 }
 
-private func createGraphicsPipeline(device: VkDevice, swapChain: SwapChain) -> VkPipeline {
+func createGraphicsPipeline(device: VkDevice, swapChain: SwapChain) -> VkPipeline {
     let shader = try! Shader(filename: "triangle", device: device)
 
     var vertCi = VkPipelineShaderStageCreateInfo()
@@ -388,7 +388,7 @@ private func createGraphicsPipeline(device: VkDevice, swapChain: SwapChain) -> V
             pSetLayouts: nil,
             pushConstantRangeCount: 0,
             pPushConstantRanges: nil
-            // pPushConstantRanges: pushConstantRange.ptr
+                // pPushConstantRanges: pushConstantRange.ptr
         ))
 
     let pipelineLayout = with(VkPipelineLayout(bitPattern: 0)) {
@@ -463,11 +463,15 @@ class VulkanState {
 
     init(waylandDisplay: Display, waylandSurface: Surface) {
         instance = createInstance()
+
+
         surface = createWaylandSurface(
             instance: instance, waylandDisplay: waylandDisplay, waylandSurface: waylandSurface)
 
-        // TODO: setup debug messaging
         physicalDevice = pickPhysicalDevice(instance: instance)
+
+        // no VK_EXT_blend_operation_advanced
+        // Vulkan.printAvailableDeviceExtension(physicalDevice: physicalDevice)
 
         families = findQueueFamilies(device: physicalDevice, surface: surface)
         let c = createLogicalDevice(families: families, physicalDevice: physicalDevice)
