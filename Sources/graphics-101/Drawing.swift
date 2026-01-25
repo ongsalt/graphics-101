@@ -12,7 +12,7 @@ func createImage(width: Int, height: Int, padding: Float = 24, cornerRadius: Flo
     // TODO: set global clip
 
     image.drawRoundedRectangleShadow(
-        rect: bound, cornerRadius: cornerRadius, color: Color(rgba: 0x0000_00ff), blur: 10)
+        rect: bound, cornerRadius: cornerRadius, color: Color(rgba: 0x0000_0045), blur: 16)
 
     image.fillRoundedRectangle(
         rect: bound,

@@ -2,15 +2,25 @@
 import Foundation
 import Wayland
 
-
 class Renderer {
     let state: VulkanState
 
     init(state: VulkanState) {
         self.state = state
+        // self.pipeline1 = createGraphicsPipeline(
+        //     device: state.device,
+        //     swapChain: state.swapChain
+        // )
+
     }
 
     func performBs() {
+        let pipeline = GraphicsPipeline(
+            device: state.device,
+            swapChain: state.swapChain,
+            shader: try! Shader(filename: "triangle", device: state.device)
+        )
+
         perform { commandBuffer, swapChain in
             var viewport = VkViewport(
                 x: 0,
@@ -28,7 +38,7 @@ class Renderer {
             )
 
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor)
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, state.pipeline)
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline)
 
             vkCmdDraw(commandBuffer, 3, 1, 0, 0)
         }

@@ -244,7 +244,8 @@ private func createVMA(
     allocatorCreateInfo[].instance = instance
     allocatorCreateInfo[].vulkanApiVersion = Vulkan.apiVersion
     allocatorCreateInfo[].flags =
-        VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT.rawValue
+        VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT.rawValue
+        | VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT.rawValue
         | VMA_ALLOCATOR_CREATE_EXT_MEMORY_PRIORITY_BIT.rawValue
     #if os(Windows)
         allocatorCreateInfo[].flags |= VMA_ALLOCATOR_CREATE_KHR_EXTERNAL_MEMORY_WIN32_BIT.rawValue
@@ -452,7 +453,7 @@ class VulkanState {
     let families: SelectedQueuesIndices
     let graphicsQueue: VkQueue
     let presentQueue: VkQueue
-    let pipeline: VkPipeline
+    // let pipeline: VkPipeline
     let commandPool: VkCommandPool
     let commandBuffers: [VkCommandBuffer]
     let maxFramesInFlight: UInt32 = 2
@@ -463,7 +464,6 @@ class VulkanState {
 
     init(waylandDisplay: Display, waylandSurface: Surface) {
         instance = createInstance()
-
 
         surface = createWaylandSurface(
             instance: instance, waylandDisplay: waylandDisplay, waylandSurface: waylandSurface)
@@ -489,11 +489,6 @@ class VulkanState {
             physicalDevice: physicalDevice,
             logicalDevice: device,
             families: families
-        )
-
-        pipeline = createGraphicsPipeline(
-            device: device,
-            swapChain: swapChain
         )
 
         let (pool, cmdBuffer) = VulkanState.createCommandPool(
