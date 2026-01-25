@@ -1,5 +1,7 @@
 @preconcurrency import CVMA
+import CoreFoundation
 import Foundation
+import Synchronization
 import Wayland
 
 @main
@@ -13,17 +15,23 @@ struct Graphics101 {
     func run() throws {
         let display = try Display()
         display.monitorEvents()
-        let token = RunLoop.main.addListener(on: [.beforeWaiting]) { _ in
-            display.flush()
-        }
+        // let wlQueue = display.createQueue()
+        // let displayProxy = try display.createSelfProxy(queue: wlQueue)
 
         let window: RawWindow = RawWindow(display: display, title: "yomama")
-        // window.show()
+        window.show()
         // TODO: window.xdgTopLevel
 
+        let token = RunLoop.main.addListener(on: [.beforeWaiting]) { _ in
+            // print("will sleep")
+            // display.flush()
+        }
+
         let vulkanState = VulkanState(
-            waylandDisplay: display,
-            waylandSurface: window.surface
+            waylandDisplay: display.display,
+            waylandSurface: window.surface.surface
+                // waylandDisplay: display.createProxy(for: display.display, queue: wlQueue),
+                // waylandSurface: display.createProxy(for: window.surface.surface, queue: wlQueue)
         )
 
         let uniformBuffer: GPUBuffer<Float32> = GPUBuffer(
@@ -59,8 +67,10 @@ struct Graphics101 {
         let pipeline = GraphicsPipeline(
             device: vulkanState.device,
             swapChain: vulkanState.swapChain,
-            vertexShader: try Shader(filename: "rounded_rectangle.vert.spv", device: vulkanState.device),
-            fragmentShader: try Shader(filename: "rounded_rectangle.frag.spv", device: vulkanState.device),
+            vertexShader: try Shader(
+                filename: "rounded_rectangle.vert.spv", device: vulkanState.device),
+            fragmentShader: try Shader(
+                filename: "rounded_rectangle.frag.spv", device: vulkanState.device),
             binding: .init(
                 bindingDescriptions: [RoundedRectangleShaderData.bindingDescriptions],
                 attributeDescriptions: RoundedRectangleShaderData.attributeDescriptions
@@ -69,8 +79,15 @@ struct Graphics101 {
 
         // renderer.performBs()
 
+        // we spam draw command to render thread at 120 fps first
+        // render thread will read LATEST command -> process it -> then loop
+        // or sleep until message come
+
+        let fps: Double = 90
+
+        // Task.detached {
         func render() {
-            renderer.perform { commandBuffer, swapChain in
+            let finished = renderer.perform { commandBuffer, swapChain in
                 var viewport = VkViewport(
                     x: 0,
                     y: 0,
@@ -99,28 +116,27 @@ struct Graphics101 {
                 //     pipeline.pipelineLayout, 0, 1, descriptorSet, 0, nil)
                 var address = uniformBuffer.deviceAddress
                 vkCmdPushConstants(
-                    commandBuffer, pipeline.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT.rawValue, 0,
+                    commandBuffer, pipeline.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT.rawValue,
+                    0,
                     UInt32(MemoryLayout<VkDeviceAddress>.size), &address
                 )
 
                 vkCmdDrawIndexed(commandBuffer, UInt32(indexes.count), 1, 0, 0, 0)
             }
+            
+            Logger.info(.renderLoop, "\(finished ? "finished" : "cancelled")")
         }
 
-        // launchCounter()
         render()
-        // func queueRender() {
-        //     let id = UUID()
-        //     Logger.info(.renderLoop, "Queing render \(id)")
-        //     DispatchQueue.main.async {
-        //         render()
-        //         // wait for it to finish
-        //         Logger.info(.renderLoop, "completed \(id)")
-        //         queueRender()
-        //     }
-        // }
 
-        // queueRender()
+        while true {
+            render()
+
+            // bruh
+            display.dispatchPending()
+
+            RunLoop.main.limitDate(forMode: .default)
+        }
 
         RunLoop.main.run()
         drop(token)

@@ -75,14 +75,14 @@ private func createInstance() -> VkInstance {
 }
 
 private func createWaylandSurface(
-    instance: VkInstance, waylandDisplay: Wayland.Display, waylandSurface: Wayland.Surface
+    instance: VkInstance, waylandDisplay: OpaquePointer, waylandSurface: OpaquePointer
 ) -> VkSurfaceKHR {
     var createInfo = VkWaylandSurfaceCreateInfoKHR(
         sType: VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
         pNext: nil,
         flags: VkWaylandSurfaceCreateFlagsKHR(),
-        display: waylandDisplay.display,
-        surface: waylandSurface.surface
+        display: waylandDisplay,
+        surface: waylandSurface
     )
 
     var surface: VkSurfaceKHR? = nil
@@ -283,7 +283,7 @@ class VulkanState {
 
     let allocator: VmaAllocator
 
-    init(waylandDisplay: Display, waylandSurface: Surface) {
+    init(waylandDisplay: OpaquePointer, waylandSurface: OpaquePointer) {
         instance = createInstance()
 
         surface = createWaylandSurface(

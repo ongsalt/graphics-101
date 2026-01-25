@@ -85,27 +85,80 @@ public class Display {
         _ = roundtrip()
     }
 
+    public init(display: OpaquePointer) throws(InitWaylandError) {
+        self.registry = Registry()
+        let registry = wl_display_get_registry(display)!
+        wl_registry_add_listener(registry, &listener, &self.registry)
+        self.display = display
+        self.fd = wl_display_get_fd(display)
+        _ = roundtrip()
+    }
+
     // this is ass
     public func monitorEvents(
         queue: DispatchQueue = .main,
+        callback: (() -> Void)? = nil
     ) {
         guard self.source == nil else { return }
 
         let source = DispatchSource.makeReadSource(fileDescriptor: fd, queue: queue)
-        source.setEventHandler { [unowned self] in
-            self.prepareRead()
+
+        source.setEventHandler(qos: .userInteractive) { [unowned self] in
+            let ret = self.prepareRead()
+            if ret != 0 {
+                self.cancelRead()
+                print("bruh ret:\(ret) errno:\(errno)")
+                self.dispatchPending()
+                return
+            }
+            // source.suspend()
+            // print("Ok")
+            // DispatchQueue.main.
+
             self.readEvent()
             self.dispatchPending()
             self.flush()
+            // source.resume()
         }
 
+        // while self.prepareRead() != 0 {
+        //     dispatchPending()
+        // }
+        // flush()
+
         source.resume()
+
         self.source = source
+
     }
 
     public func stopMonitoring() {
         self.source = nil
     }
+
+    public func cancelRead() {
+        wl_display_cancel_read(self.display)
+    }
+
+    // public func createQueue() -> OpaquePointer {
+    //     wl_display_create_queue(self.display)
+    // }
+
+    // public func createProxy(for item: OpaquePointer, queue: OpaquePointer) -> OpaquePointer {
+    //     guard let wrapped = wl_proxy_create_wrapper(UnsafeMutableRawPointer(item)) else {
+    //         fatalError("can create proxy")
+    //     }
+
+    //     wl_proxy_set_queue(OpaquePointer(wrapped), queue)
+
+    //     return OpaquePointer(wrapped)
+    // }
+
+    // public func createSelfProxy(queue: OpaquePointer) throws -> Display {
+    //     let d = createProxy(for: self.display, queue: queue)
+
+    //     return try Display(display: d)
+    // }
 
     @discardableResult
     public func dispatch() -> Int32 {
@@ -145,6 +198,10 @@ nonisolated(unsafe) private var pongListener = xdg_wm_base_listener { data, xdgW
     // wtf, it crash if i uncomment this
     // print("ping")
     xdg_wm_base_pong(xdgWmBase, serial)
+}
+
+public func flushPending(queue: OpaquePointer, display: OpaquePointer) {
+    wl_display_dispatch_queue_pending(display, queue)
 }
 
 func listenerCallback(
