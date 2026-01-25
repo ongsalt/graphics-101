@@ -39,10 +39,10 @@ struct Graphics101 {
         }
 
         let (vertexData, indexes) = RoundedRectangleDrawCommand(
-            color: Color.blue,
+            color: [Color.white, Color.white, Color.white, Color.white],
             center: SIMD2(400, 300),
-            size: SIMD2(160, 120),
-            borderRadius: 24,
+            size: SIMD2(160, 120) * 2,
+            borderRadius: 48,
             rotation: 0,
             isFirstHalf: 0
         ).toVertexData()
