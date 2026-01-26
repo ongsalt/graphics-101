@@ -38,6 +38,7 @@ struct Graphics101 {
         let token = RunLoop.main.addListener(on: [.beforeWaiting]) { _ in
             // print("will sleep")
             // display.flush()
+            // display.dispatchPending()
         }
 
         let vulkanState = VulkanState(
@@ -59,14 +60,6 @@ struct Graphics101 {
             uniformBuffer.set([800, 600])
         }
 
-        // RoundedRectangleDrawCommand(
-        //     color: [Color.white, Color.white, Color.white, Color.white],
-        //     center: SIMD2(400, 300),
-        //     size: SIMD2(160, 120) * 2,
-        //     borderRadius: 48,
-        //     rotation: 0,
-        // )
-
         var (vertexData, indexes) = randomRect().toVertexData()
         var indexCount = indexes.count
 
@@ -76,8 +69,8 @@ struct Graphics101 {
         let indexBuffer = GPUBuffer(
             indexBuffer: indexes, allocator: vulkanState.allocator, device: vulkanState.device)
 
-        let renderer = Renderer(state: vulkanState)
-        // renderer.performBs()
+        let renderQueue = RenderQueue(state: vulkanState)
+        // renderQueue.performBs()
 
         let pipeline = GraphicsPipeline(
             device: vulkanState.device,
@@ -109,7 +102,7 @@ struct Graphics101 {
                 rects.append(r)
                 vertexData.append(contentsOf: res.vertexes)
                 indexes.append(contentsOf: res.indexes)
-                print("Add")
+                // print("Add")
                 buffer.mapped.initialize(from: vertexData)
                 indexBuffer.mapped.initialize(from: indexes)
                 indexCount = indexes.count
@@ -123,7 +116,7 @@ struct Graphics101 {
         var drawned: Int64 = 0
 
         func render() {
-            let finished = renderer.perform(blocking: true) { commandBuffer, swapChain in
+            let finished = renderQueue.perform() { commandBuffer, swapChain in
                 var viewport = VkViewport(
                     x: 0,
                     y: 0,
@@ -174,7 +167,8 @@ struct Graphics101 {
         // ContiguousArray()
 
         func queueRender() {
-            DispatchQueue.main.async(qos: .userInitiated) {
+            let now = DispatchTime.now().uptimeNanoseconds
+            DispatchQueue.main.asyncAfter(deadline: .init(uptimeNanoseconds: now + 1000 * 1000 * 2), qos: .userInitiated, flags: DispatchWorkItemFlags()) {
                 updateVertex()
                 render()
                 display.dispatchPending()
@@ -185,6 +179,9 @@ struct Graphics101 {
         Task {
             while !Task.isCancelled {
                 try await Task.sleep(for: .seconds(1))
+                print(
+                    "drawed: \(drawned) / frame: \(max((ContinuousClock.now - start).components.seconds, 1))"
+                )
                 print(
                     "fps: \(drawned / max((ContinuousClock.now - start).components.seconds, 1))"
                 )

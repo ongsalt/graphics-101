@@ -2,16 +2,11 @@
 import Foundation
 import Wayland
 
-class Renderer {
+class RenderQueue {
     let state: VulkanState
 
     init(state: VulkanState) {
         self.state = state
-        // self.pipeline1 = createGraphicsPipeline(
-        //     device: state.device,
-        //     swapChain: state.swapChain
-        // )
-
     }
 
     func performBs() {
