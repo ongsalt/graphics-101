@@ -12,6 +12,19 @@ struct Graphics101 {
         try instance.run()
     }
 
+    func randomRect() -> RoundedRectangleDrawCommand {
+        RoundedRectangleDrawCommand(
+            color: duplicated(
+                Color(Float.random(in: 0...1), .random(in: 0...1), .random(in: 0...1), 0.5)
+                    .premulitplied()
+            ),
+            center: SIMD2(.random(in: 0...800), .random(in: 0...600)),
+            size: SIMD2(.random(in: 50...200), .random(in: 50...200)),
+            borderRadius: .random(in: 50...200),
+            rotation: 0,
+        )
+    }
+
     func run() throws {
         let display = try Display()
         display.monitorEvents()
@@ -46,14 +59,16 @@ struct Graphics101 {
             uniformBuffer.set([800, 600])
         }
 
-        let (vertexData, indexes) = RoundedRectangleDrawCommand(
-            color: [Color.white, Color.white, Color.white, Color.white],
-            center: SIMD2(400, 300),
-            size: SIMD2(160, 120) * 2,
-            borderRadius: 48,
-            rotation: 0,
-            isFirstHalf: 0
-        ).toVertexData()
+        // RoundedRectangleDrawCommand(
+        //     color: [Color.white, Color.white, Color.white, Color.white],
+        //     center: SIMD2(400, 300),
+        //     size: SIMD2(160, 120) * 2,
+        //     borderRadius: 48,
+        //     rotation: 0,
+        // )
+
+        var (vertexData, indexes) = randomRect().toVertexData()
+        var indexCount = indexes.count
 
         // we should pool it
         let buffer = GPUBuffer(
@@ -77,20 +92,32 @@ struct Graphics101 {
             )
         )
 
-        func updateVertex() {
-            let time = sin(Date.now.timeIntervalSince1970 * 4)
-            let a = (time + 1) / 7 + 2
-            let (vertexData, indexes) = RoundedRectangleDrawCommand(
-                color: [Color.white, Color.white, Color.white, Color.white],
-                center: SIMD2(400, 300),
-                size: SIMD2(160, 120) * Float(a),
-                borderRadius: 64,
-                rotation: 0,
-                isFirstHalf: 0
-            ).toVertexData()
+        var rects: [RoundedRectangleDrawCommand] = [
+            randomRect()
+        ]
 
-            buffer.mapped.initialize(from: vertexData)
-            indexBuffer.mapped.initialize(from: indexes)
+        let start = ContinuousClock.now
+
+        // well, we shuold not do this every frame
+
+        func updateVertex() {
+            let time = ContinuousClock.now
+            let d = (time - start).components.seconds * 2
+            if d > rects.count {
+                let r = randomRect()
+                let res = r.toVertexData(indexOffset: UInt32(rects.count) * 4)
+                rects.append(r)
+                vertexData.append(contentsOf: res.vertexes)
+                indexes.append(contentsOf: res.indexes)
+                print("Add")
+                buffer.mapped.initialize(from: vertexData)
+                indexBuffer.mapped.initialize(from: indexes)
+                indexCount = indexes.count
+            }
+            // let a = (time + 1) / 7 + 2
+
+            // print(vertexData.count)
+
         }
 
         var drawned: Int64 = 0
@@ -130,7 +157,8 @@ struct Graphics101 {
                     UInt32(MemoryLayout<VkDeviceAddress>.size), &address
                 )
 
-                vkCmdDrawIndexed(commandBuffer, UInt32(indexes.count), 1, 0, 0, 0)
+                // print(indexCount)
+                vkCmdDrawIndexed(commandBuffer, UInt32(indexCount), 1, 0, 0, 0)
             }
 
             if finished {
@@ -142,7 +170,7 @@ struct Graphics101 {
 
         launchCounter()
 
-        let start = ContinuousClock.now
+        // let start = ContinuousClock.now
         // ContiguousArray()
 
         func queueRender() {

@@ -11,15 +11,13 @@ struct RoundedRectangleDrawCommand {
     let borderRadius: Float
     let rotation: Float
 
-    // flag
-    let isFirstHalf: UInt32  // actuall a bool tho
     // isShadow
 
     // brush
     // shadowRadius
     //
 
-    func toVertexData() -> (vertexes: [RoundedRectangleShaderData], indexes: [UInt32]) {
+    func toVertexData(indexOffset: UInt32 = 0) -> (vertexes: [RoundedRectangleShaderData], indexes: [UInt32]) {
         let halfSize = size / 2
         let vertexes = [
             center - halfSize,
@@ -31,14 +29,14 @@ struct RoundedRectangleDrawCommand {
                 color: color[i], 
                 center: center, 
                 size: size, 
-                borderRadius: borderRadius, 
+                borderRadius: min(borderRadius, size.min() / 2), 
                 rotation: rotation, 
-                isFirstHalf: isFirstHalf, 
+                // isFirstHalf: isFirstHalf, 
                 vertex: vertex
             )
         }
 
-        let indexes: [UInt32] = [0, 1, 2, 0, 3, 2]
+        let indexes: [UInt32] = [indexOffset + 0, indexOffset + 1, indexOffset + 2, indexOffset + 0, indexOffset + 3, indexOffset + 2]
 
         return (vertexes, indexes)
     }
@@ -54,7 +52,7 @@ struct RoundedRectangleShaderData {
     let rotation: Float
 
     // flag
-    let isFirstHalf: UInt32  // actuall a bool tho
+    // let isFirstHalf: UInt32  // actuall a bool tho
 
     let vertex: SIMD2<Float>
 
@@ -87,12 +85,12 @@ struct RoundedRectangleShaderData {
             offset: UInt32(MemoryLayout<Self>.offset(of: \.borderRadius)!)
         ),
         // isFirstHalf
-        .init(
-            location: 3,
-            binding: 0,
-            format: VK_FORMAT_R32_UINT,  // a bool
-            offset: UInt32(MemoryLayout<Self>.offset(of: \.isFirstHalf)!)
-        ),
+        // .init(
+        //     location: 3,
+        //     binding: 0,
+        //     format: VK_FORMAT_R32_UINT,  // a bool
+        //     offset: UInt32(MemoryLayout<Self>.offset(of: \.isFirstHalf)!)
+        // ),
 
         // vertex position
         .init(

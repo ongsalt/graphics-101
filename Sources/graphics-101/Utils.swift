@@ -23,3 +23,15 @@ func run<T>(_ fn: () -> T) -> T {
 }
 
 func drop<T>(_ value: consuming T) {}
+
+func duplicated<T>(_ value: T) -> [4 of T] {
+    [value, value, value, value]
+}
+
+func duplicated<T>(_ value: T) -> [3 of T] {
+    [value, value, value]
+}
+
+func duplicated<T>(_ value: T) -> [2 of T] {
+    [value, value]
+}

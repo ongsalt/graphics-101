@@ -37,7 +37,7 @@ class GPUBuffer<BufferData> {
         usages: VkBufferUsageFlagBits? = nil
     ) {
         self.init(
-            of: BufferData.self, allocator: allocator, device: device, count: count ?? data.count,
+            of: BufferData.self, allocator: allocator, device: device, count: count,
             usages: usages)
 
         self.mapped.initialize(from: data)

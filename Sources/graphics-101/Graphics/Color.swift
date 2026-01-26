@@ -114,6 +114,10 @@ struct Color {
         Color(r: r, g: g, b: b, a: a * opacity)
     }
 
+    func premulitplied() -> Color {
+        Color(r: r * a, g: g * a, b: b * a, a: a)
+    }
+
     func screen(_ other: Color) -> Color {
         Color(
             r: 1 - (1 - r) * (1 - other.r),
