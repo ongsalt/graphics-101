@@ -18,6 +18,8 @@ struct RoundedRectangleDrawCommand {
     // shadowRadius
     //
 
+    static let indexCount: UInt32 = 4
+
     func toVertexData(indexOffset: UInt32 = 0) -> (vertexes: [RoundedRectangleVertexData], indexes: [UInt32]) {
         let halfSize = size / 2
         let vertexes = [

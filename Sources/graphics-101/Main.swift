@@ -65,6 +65,6 @@ struct Graphics101 {
         // let start = ContinuousClock.now
         // ContiguousArray()
 
-        drop(token)
+        // drop(token)
     }
 }

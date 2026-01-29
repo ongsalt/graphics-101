@@ -31,7 +31,6 @@ class Compositor {
 
         traverse(layer: rootLayer, commands: &commands, transformation: .identity)
 
-
         return DrawInfo(damagedArea: [rootLayer.bounds], commands: groupDrawCommand(commands: commands)) 
         // var commands: [DrawCommand] = []
         // // damagedLayers

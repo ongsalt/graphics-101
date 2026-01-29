@@ -47,6 +47,7 @@ class RenderLoop {
                 bufferOffset += buffer.write(indexes, offset: bufferOffset)
 
                 var offsets: [UInt64] = [UInt64(vertexBufferOffset)]
+                
                 pipeline.bind(commandBuffer: commandBuffer)
 
                 vkCmdBindVertexBuffers(commandBuffer, 0, 1, &buffer.buffer, &offsets)

@@ -32,15 +32,21 @@ func groupDrawCommand(commands: [DrawCommand]) -> [GroupedDrawCommand] {
 
     var vertexes: [RoundedRectangleVertexData] = []
     var indexes: [UInt32] = []
-    for (i, cmd) in commands.enumerated() {
+    var uniqueIndexCount: UInt32 = 0
+
+    for cmd in commands {
         guard case .roundedRectangle(let rect) = cmd else {
             fatalError("not possible")
-        } 
-        let data = rect.toVertexData(indexOffset: UInt32(i))
+        }
+        
+        let data = rect.toVertexData(indexOffset: uniqueIndexCount)
+        uniqueIndexCount += RoundedRectangleDrawCommand.indexCount
         vertexes.append(contentsOf: data.vertexes)
         indexes.append(contentsOf: data.indexes)
     }
 
     grouped.append(.main(vertexes: vertexes, indexes: indexes))
+
+    print(grouped[0])
     return grouped
 }
