@@ -3,23 +3,50 @@ import Wayland
 class Compositor {
     let rootLayer: Layer
     var damagedLayers: [Layer: [Invalidation]] = [:]
+    private var dirty: Bool = false
+    var shouldRedraw: Bool {
+        dirty || animationFrameRequests.count != 0
+    }
+
+    private var animationFrameRequests: [AnimationFrameRequest] = []
 
     init(size: SIMD2<Float>) {
         rootLayer = Layer(rect: Rect(top: 0, left: 0, width: size.x, height: size.y))
+        rootLayer.compositor = self
     }
 
     func invalidateLayer(layer: Layer, invalidation: Invalidation) {
         // tell someone we need rerender, kinda requestAnimationFrame
-
+        dirty = true
         self.damagedLayers[layer, default: []].append(invalidation)
     }
 
+    func requestAnimationFrame(_ block: @escaping AnimationCallback) {
+        animationFrameRequests.append(AnimationFrameRequest(callback: block, createdAt: .now))
+    }
+
+    func runAnimation() {
+        var toRemove: [Int] = []
+        for (index, a) in animationFrameRequests.enumerated() {
+            if a.run() == .done {
+                toRemove.append(index)
+            }
+        }
+
+        for i in toRemove.reversed() {
+            animationFrameRequests.remove(at: i)
+        }
+    }
+
     func flushDrawCommand() -> DrawInfo {
-        defer { damagedLayers = [:] }
-        
+        defer {
+            damagedLayers = [:]
+            dirty = false
+        }
+
         // this is just redraw everything
         var commands: [DrawCommand] = []
-        
+
         func traverse(layer: Layer, commands: inout [DrawCommand], transformation: AffineMatrix) {
             let t = layer.totalTransformation
             commands.append(contentsOf: layer.getLayerDrawCommands(transformation: transformation))
@@ -31,7 +58,8 @@ class Compositor {
 
         traverse(layer: rootLayer, commands: &commands, transformation: .identity)
 
-        return DrawInfo(damagedArea: [rootLayer.bounds], commands: groupDrawCommand(commands: commands)) 
+        return DrawInfo(
+            damagedArea: [rootLayer.bounds], commands: groupDrawCommand(commands: commands))
         // var commands: [DrawCommand] = []
         // // damagedLayers
 

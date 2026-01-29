@@ -2,8 +2,9 @@ class Layer {
     unowned let parent: Layer? = nil
     var children: [Layer] = []
 
-    private unowned var compositor: Compositor? = nil {
+    unowned var compositor: Compositor? = nil {
         didSet {
+            compositor?.invalidateLayer(layer: self, invalidation: .existence)
             for c in self.children {
                 c.compositor = compositor
             }
@@ -87,9 +88,9 @@ class Layer {
         var commands: [DrawCommand] = []
 
         let bg = RoundedRectangleDrawCommand(
-            color: duplicated(self.backgroundColor),
+            color: duplicated(self.backgroundColor.multiply(opacity: opacity).premulitplied()),
             center: self.absoluteFrame.center,
-            size: self.absoluteFrame.size,
+            size: self.absoluteFrame.size * scale,
             borderRadius: self.cornerRadius,
             rotation: self.rotation
         )

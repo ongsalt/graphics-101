@@ -2,6 +2,7 @@ enum Invalidation {
     case transformations
     case colors
     case backdropFilters
+    case existence
 }
 
 struct DrawInfo {

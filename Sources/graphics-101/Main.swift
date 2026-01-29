@@ -8,14 +8,11 @@ import Wayland
 @MainActor
 struct Graphics101 {
     static func main() throws {
-        Task {
-            let instance = Graphics101()
-            try await instance.run()
-        }
-        RunLoop.main.run()
+        let instance = Graphics101()
+        try instance.run()
     }
 
-    func run() async throws {
+    func run() throws {
         let display = try Display()
         display.monitorEvents()
 
@@ -26,8 +23,6 @@ struct Graphics101 {
             display.dispatchPending()
             display.flush()
         }
-
-        Box(token).leak()
 
         let vulkanState = VulkanState(
             waylandDisplay: display.display,
@@ -43,9 +38,31 @@ struct Graphics101 {
             Float(vulkanState.swapChain.extent.width), Float(vulkanState.swapChain.extent.height),
         ])
 
-        let l = Layer(rect: Rect(top: 10, left: 10, width: 100, height: 100))
-        l.backgroundColor = .red
-        compositor.rootLayer.addChild(l)
+        // TODO: request animation frame
+        Task {
+            try await Task.sleep(for: .seconds(0.5))
+
+            let l = Layer(rect: Rect(top: 10, left: 10, width: 100, height: 100))
+            l.backgroundColor = .red
+            compositor.rootLayer.addChild(l)
+
+            compositor.requestAnimationFrame { progress in
+                let t = progress / Duration.milliseconds(400)
+                if t > 1 {
+                    l.scale = 1
+                    l.opacity = 1
+                    return .done
+                }
+
+                // apply p
+                let p = 1 - Float.pow(1 - Float(t), 3)
+
+                l.scale = 1 - 0.2 + p * 0.2
+                l.opacity = p
+
+                return .ongoing
+            }
+        }
 
         // renderQueue.performBs()
 
@@ -55,6 +72,7 @@ struct Graphics101 {
             while !Task.isCancelled {
                 let nextFrameTime = ContinuousClock.now.advanced(by: .milliseconds(8))
                 await renderQueue.perform(offThread: true) { commandBuffer, swapChain in
+                    compositor.runAnimation()
                     let info = compositor.flushDrawCommand()
                     renderLoop.apply(info: info, swapChain: swapChain, commandBuffer: commandBuffer)
                 }
@@ -65,6 +83,7 @@ struct Graphics101 {
         // let start = ContinuousClock.now
         // ContiguousArray()
 
-        // drop(token)
+        RunLoop.main.run()
+        drop(token)
     }
 }

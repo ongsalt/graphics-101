@@ -38,7 +38,7 @@ func groupDrawCommand(commands: [DrawCommand]) -> [GroupedDrawCommand] {
         guard case .roundedRectangle(let rect) = cmd else {
             fatalError("not possible")
         }
-        
+
         let data = rect.toVertexData(indexOffset: uniqueIndexCount)
         uniqueIndexCount += RoundedRectangleDrawCommand.indexCount
         vertexes.append(contentsOf: data.vertexes)
@@ -47,6 +47,5 @@ func groupDrawCommand(commands: [DrawCommand]) -> [GroupedDrawCommand] {
 
     grouped.append(.main(vertexes: vertexes, indexes: indexes))
 
-    print(grouped[0])
     return grouped
 }
