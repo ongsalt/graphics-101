@@ -14,7 +14,7 @@ final class SwapChain {
     var presentSemaphores: [VkSemaphore]
     var renderSemaphore: [VkSemaphore]
 
-    let framesInFlightCount: Int = 2
+    let framesInFlightCount: Int = 1
     var frameIndex: Int = 0
 
     init(

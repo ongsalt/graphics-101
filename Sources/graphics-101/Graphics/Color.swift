@@ -146,3 +146,9 @@ struct Color {
     }
 
 }
+
+extension Color {
+    static func random(alpha: Float) -> Color {
+        Color(Float.random(in: 0...1), .random(in: 0...1), .random(in: 0...1), alpha)
+    }
+}

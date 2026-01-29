@@ -105,7 +105,7 @@ class RenderQueue {
             $0.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR
             $0.storeOp = VK_ATTACHMENT_STORE_OP_STORE
             // fuckkkkkk
-            $0.clearValue.color.float32 = (0.0, 0.0, 0.0, 0.1)
+            $0.clearValue.color.float32 = (0.0, 0.0, 0.0, 1.0)
         }
 
         let renderingInfo = Box(VkRenderingInfo()) {

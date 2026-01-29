@@ -1,4 +1,6 @@
 struct Rect {
+    static let zero = Rect(top: 0, left: 0, width: 0, height: 0)
+
     var top: Float
     var left: Float
     var width: Float
@@ -23,7 +25,19 @@ struct Rect {
     }
 
     var center: SIMD2<Float> {
-        SIMD2<Float>(left + width / 2, top + height / 2)
+        SIMD2(left + width / 2, top + height / 2)
+    }
+
+    var topLeft: SIMD2<Float> {
+        SIMD2(left, top)
+    }
+
+    var size: SIMD2<Float> {
+        SIMD2(width, height)
+    }
+
+    var atOrigin: Rect {
+        Rect(top: 0, left: 0, width: width, height: height)
     }
 
     func padded(_ amount: Float) -> Rect {
@@ -31,6 +45,10 @@ struct Rect {
             top: top - amount, left: left - amount, width: width + 2 * amount,
             height: height + 2 * amount
         )
+    }
+
+    func offset(_ offset: SIMD2<Float>) -> Rect {
+        Rect(top: top + offset.y, left: left + offset.x, width: width, height: height)
     }
 
     func contains(_ position: (Float, Float)) -> Bool {

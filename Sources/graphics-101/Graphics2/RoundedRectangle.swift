@@ -2,6 +2,7 @@
 import Foundation
 import Wayland
 
+// TODO: stroke
 struct RoundedRectangleDrawCommand {
     let color: [4 of Color]
 
@@ -17,7 +18,7 @@ struct RoundedRectangleDrawCommand {
     // shadowRadius
     //
 
-    func toVertexData(indexOffset: UInt32 = 0) -> (vertexes: [RoundedRectangleShaderData], indexes: [UInt32]) {
+    func toVertexData(indexOffset: UInt32 = 0) -> (vertexes: [RoundedRectangleVertexData], indexes: [UInt32]) {
         let halfSize = size / 2
         let vertexes = [
             center - halfSize,
@@ -25,7 +26,7 @@ struct RoundedRectangleDrawCommand {
             center + halfSize,
             SIMD2(center.x - halfSize.x, center.y + halfSize.y),
         ].enumerated().map { (i, vertex) in
-            RoundedRectangleShaderData(
+            RoundedRectangleVertexData(
                 color: color[i], 
                 center: center, 
                 size: size, 
@@ -42,7 +43,7 @@ struct RoundedRectangleDrawCommand {
     }
 }
 
-struct RoundedRectangleShaderData {
+struct RoundedRectangleVertexData {
     let color: Color
 
     let center: SIMD2<Float>
@@ -99,6 +100,8 @@ struct RoundedRectangleShaderData {
             format: VK_FORMAT_R32G32_SFLOAT,  // 2 float
             offset: UInt32(MemoryLayout<Self>.offset(of: \.vertex)!)
         ),
+
+        // use location 8-12 for transformation matrix
     ]
 
 }

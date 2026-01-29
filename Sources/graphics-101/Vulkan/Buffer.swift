@@ -52,7 +52,8 @@ class GPUBuffer<BufferData> {
         usages: VkBufferUsageFlagBits? = nil
     ) {
         // well, its ~11 f32 -> ~ 64 byte each * 1000 vertex = 64Kb
-        // fuck, just do 1mb
+        // fuck, just do 1mb -> 
+        // we have 16 bind point max, each is 16 byte
         let count = count ?? ((1024 * 1024) / MemoryLayout<BufferData>.size)
         let size = count * MemoryLayout<BufferData>.size
 

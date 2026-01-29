@@ -2,6 +2,9 @@
 swift run -c release && ffmpeg -i ./ppm/%d.ppm ./out/%04d.png -y
 ```
 
+# Dependencies not included
+- wayland devel stuff
+- freetype
 
 ## Wayland stuff
 ```bash
@@ -29,7 +32,7 @@ ok, it doesnt support push constant, use glslc instead
 
 ## Note
 - query required gpu features (and optionally provide fallback)
-    - VK_EXT_blend_operation_advanced is not supported on my machine 
+    - VK_EXT_blend_operation_advanced is not supported on my machine (or any amd card) 
 - shaders: so we gonna have shit ton of shader
     - roundedrect
     - roundedrect (superellipse)

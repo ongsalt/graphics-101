@@ -80,8 +80,8 @@ struct Graphics101 {
             fragmentShader: try Shader(
                 filename: "rounded_rectangle.frag.spv", device: vulkanState.device),
             binding: .init(
-                bindingDescriptions: [RoundedRectangleShaderData.bindingDescriptions],
-                attributeDescriptions: RoundedRectangleShaderData.attributeDescriptions
+                bindingDescriptions: [RoundedRectangleVertexData.bindingDescriptions],
+                attributeDescriptions: RoundedRectangleVertexData.attributeDescriptions
             )
         )
 
@@ -179,9 +179,9 @@ struct Graphics101 {
         Task {
             while !Task.isCancelled {
                 try await Task.sleep(for: .seconds(1))
-                print(
-                    "drawed: \(drawned) / frame: \(max((ContinuousClock.now - start).components.seconds, 1))"
-                )
+                // print(
+                //     "drawed: \(drawned) / sec: \(max((ContinuousClock.now - start).components.seconds, 1))"
+                // )
                 print(
                     "fps: \(drawned / max((ContinuousClock.now - start).components.seconds, 1))"
                 )
