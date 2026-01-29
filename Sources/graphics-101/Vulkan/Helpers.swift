@@ -157,3 +157,10 @@ extension UnsafeMutableRawBufferPointer {
         self.map { String(format: "%02X", $0) }.joined(separator: " ")
     }
 }
+
+
+extension VkBufferUsageFlagBits {
+    static func | (lhs: VkBufferUsageFlagBits, rhs: VkBufferUsageFlagBits) -> VkBufferUsageFlagBits {
+        VkBufferUsageFlagBits(lhs.rawValue | rhs.rawValue)
+    }
+}

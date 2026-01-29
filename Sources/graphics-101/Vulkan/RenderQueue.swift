@@ -2,6 +2,7 @@
 import Foundation
 import Wayland
 
+@MainActor
 class RenderQueue {
     let state: VulkanState
 
@@ -9,61 +10,38 @@ class RenderQueue {
         self.state = state
     }
 
-    func performBs() {
-        let shader = try! Shader(filename: "triangle.spv", device: state.device)
-        let pipeline = GraphicsPipeline(
-            device: state.device,
-            swapChain: state.swapChain,
-            vertexShader: shader,
-            fragmentShader: shader,
-            vertexEntry: "vtx_main",
-            fragmentEntry: "frag_main",
-        )
-
-        perform { commandBuffer, swapChain in
-            var viewport = VkViewport(
-                x: 0,
-                y: 0,
-                width: Float(swapChain.extent.width),
-                height: Float(swapChain.extent.height),
-                minDepth: 0.0,
-                maxDepth: 1.0
-            )
-            vkCmdSetViewport(commandBuffer, 0, 1, &viewport)
-
-            var scissor = VkRect2D(
-                offset: VkOffset2D(x: 0, y: 0),
-                extent: swapChain.extent
-            )
-
-            vkCmdSetScissor(commandBuffer, 0, 1, &scissor)
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline)
-
-            vkCmdDraw(commandBuffer, 3, 1, 0, 0)
-        }
-    }
-
-    func perform(blocking: Bool = false, _ block: (VkCommandBuffer, SwapChain) -> Void) -> Bool {
-        // Logger.info(.renderLoop, "perform 1 pass")
+    private func waitForImage(offThread: Bool = false, waitVsync: Bool = false) async {
         let swapChain = state.swapChain
         let frameIndex = swapChain.frameIndex
 
         // TODO: epoll/DispatchSource.makeReadSource
-        if blocking {
-            swapChain.waitForFence(frameIndex: frameIndex)
-        } else {
-            if !swapChain.isFenceCompleted(frameIndex: frameIndex) {
-                return false
+        if offThread {
+            struct TrustMeBro: @unchecked Sendable {
+                var fence: VkFence?
+                var device: VkDevice
             }
-            swapChain.resetFence(frameIndex: frameIndex)
+
+            let c = TrustMeBro(fence: swapChain.fences[frameIndex], device: state.device)
+
+            await withUnsafeContinuation { continuation in
+                DispatchQueue.global(qos: .userInitiated).async { [c] in
+                    var c = c
+                    vkWaitForFences(c.device, 1, &c.fence, true, UInt64.max).unwrap()
+                    continuation.resume()
+                }
+            }
+        } else {
+            swapChain.waitForFence(frameIndex: frameIndex)
         }
 
-        let (image, imageView, imageIndex) = swapChain.acquireNextImage()
+        swapChain.resetFence(frameIndex: frameIndex)
+    }
 
-        // update shader data: https://www.howtovulkan.com/#shader-data-buffers
-        // well, we have no shader data yet
+    func prepareRendering(
+        frameIndex: Int, image: VkImage, imageView: VkImageView, imageIndex: UInt32
+    ) -> VkCommandBuffer {
+        let swapChain = state.swapChain
 
-        // record command buffer
         let commandBuffer = state.commandBuffers[frameIndex]
         vkResetCommandBuffer(commandBuffer, 0).unwrap()
         var commandBufferCI = with(VkCommandBufferBeginInfo()) {
@@ -105,7 +83,7 @@ class RenderQueue {
             $0.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR
             $0.storeOp = VK_ATTACHMENT_STORE_OP_STORE
             // fuckkkkkk
-            $0.clearValue.color.float32 = (0.0, 0.0, 0.0, 1.0)
+            $0.clearValue.color.float32 = (0.0, 0.0, 0.0, 0.1)
         }
 
         let renderingInfo = Box(VkRenderingInfo()) {
@@ -119,10 +97,54 @@ class RenderQueue {
 
         vkCmdBeginRendering(commandBuffer, renderingInfo.ptr)
 
+        return commandBuffer
+    }
+
+    func perform(
+        blocking: Bool = false, offThread: Bool = false, waitVsync: Bool = false,
+        _ block: (VkCommandBuffer, SwapChain) -> Void
+    ) async -> Bool {
+        // Logger.info(.renderLoop, "perform 1 pass")
+        let swapChain = state.swapChain
+        let frameIndex = swapChain.frameIndex
+
+        // TODO: epoll/DispatchSource.makeReadSource
+        if offThread {
+            await waitForImage(offThread: offThread, waitVsync: waitVsync)
+        } else {
+            if blocking {
+                swapChain.waitForFence(frameIndex: frameIndex)
+            } else {
+                if !swapChain.isFenceCompleted(frameIndex: frameIndex) {
+                    return false
+                }
+                swapChain.resetFence(frameIndex: frameIndex)
+            }
+        }
+
+        let (image, imageView, imageIndex) = swapChain.acquireNextImage()
+
+        // update shader data: https://www.howtovulkan.com/#shader-data-buffers
+        // well, we have no shader data yet
+
+        // record command buffer
+
         // Set viewport and scissor
+        let commandBuffer = prepareRendering(
+            frameIndex: frameIndex, image: image, imageView: imageView, imageIndex: imageIndex)
 
         block(commandBuffer, swapChain)
+        finishRendering(
+            commandBuffer: commandBuffer, image: image, imageIndex: imageIndex,
+            frameIndex: frameIndex)
 
+        return true
+    }
+
+    func finishRendering(
+        commandBuffer: VkCommandBuffer, image: VkImage, imageIndex: UInt32, frameIndex: Int
+    ) {
+        let swapChain = state.swapChain
         vkCmdEndRendering(commandBuffer)
 
         // Transition image to present
@@ -191,9 +213,6 @@ class RenderQueue {
         // should this be in the main queue tho
         vkQueuePresentKHR(state.presentQueue, presentInfo.ptr).unwrap()
 
-        // recreate swapchain ????
-
         swapChain.frameIndex = (swapChain.frameIndex + 1) % swapChain.framesInFlightCount
-        return true
     }
 }

@@ -6,5 +6,9 @@ enum Invalidation {
 
 struct DrawInfo {
     let damagedArea: [Rect]
-    let commands: GroupedDrawCommand
+    let commands: [GroupedDrawCommand]
 }
+
+// extension Array where Element == Rect {
+//     func 
+// }

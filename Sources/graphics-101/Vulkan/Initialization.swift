@@ -265,7 +265,7 @@ private func createVMA(
     return allocator!
 }
 
-class VulkanState {
+class VulkanState: @unchecked Sendable {
     let instance: VkInstance
     let surface: VkSurfaceKHR
     let physicalDevice: VkPhysicalDevice

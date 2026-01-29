@@ -40,6 +40,18 @@ class Layer {
     var borderColor: Color = .transparent
 
     var backgroundColor: Color = .transparent
+
+    var transformations: AffineMatrix = .identity
+    var totalTransformation: AffineMatrix {
+        transformations * mtx
+    }
+
+    private var mtx: AffineMatrix {
+        var mtx = AffineMatrix.identity
+        mtx.scale(x: scale, y: scale, z: scale)
+        mtx.rotate(angleRadians: rotation, axis: [0, 0, 1])
+        return mtx
+    }
     // how to do brush tho
 
     // var shadow: Shadow
@@ -71,7 +83,7 @@ class Layer {
         compositor?.invalidateLayer(layer: self, invalidation: type)
     }
 
-    func getLayerDrawCommands() -> [DrawCommand] {
+    func getLayerDrawCommands(transformation: AffineMatrix) -> [DrawCommand] {
         var commands: [DrawCommand] = []
 
         let bg = RoundedRectangleDrawCommand(
@@ -81,7 +93,7 @@ class Layer {
             borderRadius: self.cornerRadius,
             rotation: self.rotation
         )
-        commands.append(DrawCommand.roundedRectangleShadow(bg))
+        commands.append(DrawCommand.roundedRectangle(bg))
 
         return commands
     }

@@ -14,6 +14,7 @@ final class SwapChain {
     var presentSemaphores: [VkSemaphore]
     var renderSemaphore: [VkSemaphore]
 
+    // TODO: stop doing mailbox
     let framesInFlightCount: Int = 1
     var frameIndex: Int = 0
 

@@ -20,15 +20,16 @@ class Compositor {
         // this is just redraw everything
         var commands: [DrawCommand] = []
         
-        func traverse(layer: Layer, commands: inout [DrawCommand]) {
-            commands.append(contentsOf: layer.getLayerDrawCommands())
+        func traverse(layer: Layer, commands: inout [DrawCommand], transformation: AffineMatrix) {
+            let t = layer.totalTransformation
+            commands.append(contentsOf: layer.getLayerDrawCommands(transformation: transformation))
 
             for c in layer.children {
-                traverse(layer: c, commands: &commands)
+                traverse(layer: c, commands: &commands, transformation: transformation * t)
             }
         }
 
-        traverse(layer: rootLayer, commands: &commands)
+        traverse(layer: rootLayer, commands: &commands, transformation: .identity)
 
 
         return DrawInfo(damagedArea: [rootLayer.bounds], commands: groupDrawCommand(commands: commands)) 
