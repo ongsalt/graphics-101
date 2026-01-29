@@ -6,6 +6,24 @@ struct Rect {
     var width: Float
     var height: Float
 
+    init(
+        top: Float, left: Float, width: Float, height: Float
+    ) {
+        self.top = top
+        self.left = left
+        self.width = width
+        self.height = height
+    }
+
+    init(
+        center: SIMD2<Float>, size: SIMD2<Float>
+    ) {
+        self.top = center.y - size.y / 2
+        self.left = center.x - size.x / 2
+        self.width = size.x
+        self.height = size.y
+    }
+
     var right: Float {
         get {
             left + width
