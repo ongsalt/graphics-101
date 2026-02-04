@@ -1,5 +1,6 @@
+@MainActor
 class Layer {
-    unowned let parent: Layer? = nil
+    unowned var parent: Layer? = nil
     var children: [Layer] = []
 
     unowned var compositor: Compositor? = nil {
@@ -13,10 +14,13 @@ class Layer {
 
     var z: Float = 1
     // This should be readonly
-    var frame: Rect = .zero {
-        didSet {
-            invalidate(.transformations)
-        }
+    // var frame: Rect = .zero {
+    //     didSet {
+    //         invalidate(.transformations)
+    //     }
+    // }
+    var frame: Rect {
+        bounds
     }
     var bounds: Rect = .zero {
         didSet {
@@ -35,12 +39,20 @@ class Layer {
     var isHidden: Bool = false
     var mask: Layer? = nil
     var clipChildren: Bool = true
-    var cornerRadius: Float = 0
+    var cornerRadius: Float = 0 {
+        didSet {
+            invalidate(.colors)
+        }
+    }
 
     var borderWidth: Float = 0
     var borderColor: Color = .transparent
 
-    var backgroundColor: Color = .transparent
+    var backgroundColor: Color = .transparent {
+        didSet {
+            invalidate(.colors)
+        }
+    }
 
     var transformations: AffineMatrix = .identity
     var totalTransformation: AffineMatrix {
@@ -68,15 +80,18 @@ class Layer {
 
     convenience init(rect: Rect) {
         self.init()
-        self.frame = rect
-        self.bounds = rect.atOrigin
+        // self.frame = rect
+        // TODO: fix this
+        self.bounds = rect
     }
 
     func addChild(_ layer: Layer) {
         if let compositor {
             layer.compositor = compositor
+            // compositor.invalidateLayer(layer: layer, invalidation: .existence)
         }
 
+        layer.parent = self
         self.children.append(layer)
     }
 
@@ -101,13 +116,14 @@ class Layer {
 }
 
 extension Layer: Identifiable {}
-
-extension Layer: Hashable {
-    static func == (lhs: Layer, rhs: Layer) -> Bool {
+extension Layer: Equatable {
+    nonisolated static func == (lhs: Layer, rhs: Layer) -> Bool {
         lhs.id == rhs.id
     }
+}
 
-    public func hash(into hasher: inout Hasher) {
+extension Layer: Hashable {
+    nonisolated public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
 }

@@ -45,6 +45,7 @@ func groupDrawCommand(commands: [DrawCommand]) -> [GroupedDrawCommand] {
         indexes.append(contentsOf: data.indexes)
     }
 
+    // print(vertexes)
     grouped.append(.main(vertexes: vertexes, indexes: indexes))
 
     return grouped

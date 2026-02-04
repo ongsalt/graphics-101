@@ -5,9 +5,11 @@ import Wayland
 @MainActor
 class RenderQueue {
     let state: VulkanState
+    let onFinishCallback: (() -> Void)?
 
-    init(state: VulkanState) {
+    init(state: VulkanState, onFinishCallback: (() -> Void)? = nil) {
         self.state = state
+        self.onFinishCallback = onFinishCallback
     }
 
     private func waitForImage(offThread: Bool = false, waitVsync: Bool = false) async {
@@ -214,5 +216,6 @@ class RenderQueue {
         vkQueuePresentKHR(state.presentQueue, presentInfo.ptr).unwrap()
 
         swapChain.frameIndex = (swapChain.frameIndex + 1) % swapChain.framesInFlightCount
+        onFinishCallback?()
     }
 }

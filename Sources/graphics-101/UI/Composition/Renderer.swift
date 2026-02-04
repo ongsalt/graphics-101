@@ -1,7 +1,8 @@
 @preconcurrency import CVMA
 
 @MainActor
-class RenderLoop {
+class UIRenderer {
+    let renderQueue: RenderQueue
     // 1 buffer, each shader will get different offset in this
     let pipelines: PipelineRegistry
     let buffer: RawGPUBuffer
@@ -9,19 +10,20 @@ class RenderLoop {
 
     var shouldRender: Bool = false
 
-    init(allocator: VmaAllocator, device: VkDevice, swapChain: SwapChain) throws {
-        pipelines = try PipelineRegistry(device: device, swapChain: swapChain)
+    init(state: VulkanState, onFinishCallback: (() -> Void)? = nil) throws {
+        renderQueue = RenderQueue(state: state, onFinishCallback: onFinishCallback)
+        pipelines = try PipelineRegistry(device: state.device, swapChain: state.swapChain)
         buffer = RawGPUBuffer(
-            allocator: allocator,
-            device: device,
+            allocator: state.allocator,
+            device: state.device,
             size: 1024 * 1024,
             usages: VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
         )
 
         uniformBuffer = GPUBuffer(
             data: [(800, 600)],
-            allocator: allocator,
-            device: device,
+            allocator: state.allocator,
+            device: state.device,
             count: 1,
             usages: VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
         )
@@ -47,7 +49,7 @@ class RenderLoop {
                 bufferOffset += buffer.write(indexes, offset: bufferOffset)
 
                 var offsets: [UInt64] = [UInt64(vertexBufferOffset)]
-                
+
                 pipeline.bind(commandBuffer: commandBuffer)
 
                 vkCmdBindVertexBuffers(commandBuffer, 0, 1, &buffer.buffer, &offsets)
@@ -65,6 +67,12 @@ class RenderLoop {
 
             // add pipeline to renderqueue + vertex data
             }
+        }
+    }
+
+    func render(info: DrawInfo) async {
+        await renderQueue.perform(offThread: true) { commandBuffer, swapChain in
+            self.apply(info: info, swapChain: swapChain, commandBuffer: commandBuffer)
         }
     }
 }

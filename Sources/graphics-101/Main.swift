@@ -29,68 +29,48 @@ struct Graphics101 {
             waylandSurface: window.surface.surface
         )
 
-        let renderQueue = RenderQueue(state: vulkanState)
-        let renderLoop = try RenderLoop(
-            allocator: vulkanState.allocator, device: vulkanState.device,
-            swapChain: vulkanState.swapChain)
+        let renderer = try UIRenderer(
+            state: vulkanState, onFinishCallback: { display.dispatchPending() })
 
-        let compositor = Compositor(size: [
-            Float(vulkanState.swapChain.extent.width), Float(vulkanState.swapChain.extent.height),
-        ])
+        let compositor = Compositor(
+            renderer: renderer,
+            size: [
+                Float(vulkanState.swapChain.extent.width),
+                Float(vulkanState.swapChain.extent.height),
+            ]
+        )
 
-        func addRect(rect: Rect) {
-            // print(rect)
-            let l = Layer(rect: rect)
-            l.backgroundColor = Color.red.multiply(opacity: 0.2)
-            l.cornerRadius = 36
-            compositor.rootLayer.addChild(l)
+        Compositor.current = compositor
 
-            compositor.requestAnimationFrame { progress in
-                let t = progress / Duration.milliseconds(300)
-                if t > 1 {
-                    l.scale = 1
-                    l.opacity = 1
-                    return .done
-                }
+        // let l = Layer(rect: Rect.init(center: [100,100], size: [100,100]))
+        // l.backgroundColor = .red
+        // compositor.rootLayer.addChild(l)
 
-                // apply p
-                let p = 1 - Float.pow(1 - Float(t), 4)
-
-                l.scale = 1 - 0.2 + p * 0.2
-                l.opacity = p
-
-                return .ongoing
-            }
+        let runtime = UIRuntime(root: compositor.rootLayer) {
+            Counter2(props: 1)
         }
 
-        Task {
-            while !Task.isCancelled {
-                try await Task.sleep(for: .seconds(0.5))
-                addRect(
-                    rect: Rect(
-                        center: [.random(in: 0...800), .random(in: 0...600)],
-                        size: .random(in: 50...200)
-                    )
-                )
-            }
-        }
+        // print("\(compositor.rootLayer.children[0].bounds)")
+
+        Unmanaged.passRetained(runtime)
 
         // renderQueue.performBs()
 
         // launchCounter()
+        // compositor.start()
 
-        Task {
-            while !Task.isCancelled {
-                let nextFrameTime = ContinuousClock.now.advanced(by: .milliseconds(8))
-                await renderQueue.perform(offThread: true) { commandBuffer, swapChain in
-                    compositor.runAnimation()
-                    let info = compositor.flushDrawCommand()
-                    renderLoop.apply(info: info, swapChain: swapChain, commandBuffer: commandBuffer)
-                }
-                display.dispatchPending()
-                try await Task.sleep(until: nextFrameTime)
-            }
-        }
+        // Task {
+        //     while !Task.isCancelled {
+        //         let nextFrameTime = ContinuousClock.now.advanced(by: .milliseconds(8))
+        //         await renderQueue.perform(offThread: true) { commandBuffer, swapChain in
+        //             compositor.runAnimation()
+        //             let info = compositor.flushDrawCommand()
+        //             renderer.apply(info: info, swapChain: swapChain, commandBuffer: commandBuffer)
+        //         }
+        //         display.dispatchPending()
+        //         try await Task.sleep(until: nextFrameTime)
+        //     }
+        // }
 
         // let start = ContinuousClock.now
         // ContiguousArray()

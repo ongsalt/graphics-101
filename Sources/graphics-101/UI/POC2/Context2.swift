@@ -10,52 +10,68 @@
 /// for now just create a wrapper to make its homogenous
 ///
 
+@MainActor
 protocol UI2 {
-    associatedtype PlatformNode: AnyObject
+    associatedtype PlatformNode = Layer
 
     // what if its container
-    func setupWidget(context: Context2<PlatformNode>)
+    func mount(context: Context2)
     func destroy()
 }
 
 extension UI2 {
-    func setupWidget(context: Context2<PlatformNode>) {}
+    func mount(context: Context2) {}
     func destroy() {}
 }
 
-class FCRender<PlatformNode: AnyObject>: UI2 {
-    let setup: (Context2<PlatformNode>) -> Void
+class FCRender: UI2 {
+    let setup: (Context2) -> Void
     // Phase 1 is for init our tree, then phase 2 is for
-    init(_ block: @escaping (FCBuilder<PlatformNode>) -> Void) {
-        let builder = FCBuilder<PlatformNode>()
-        block(builder)
-        self.setup = builder.build()
+    init(_ block: @escaping (Context2) -> Void) {
+        self.setup = block
     }
 
-    func setupWidget(context: Context2<PlatformNode>) -> [PlatformNode] {
+    func mount(context: Context2) {
+        // print("mounnnttt")
         setup(context)
-        return []
+        // return []
     }
-
 
     // view modifier here????
 }
 
-class FCBuilder<PlatformNode: AnyObject> {
-    public func startComponent(block: () -> Void) {
-        
+// class FCBuilder<PlatformNode: AnyObject> {
+//     public func startComponent(block: () -> Void) {
+
+//     }
+
+//     fileprivate func build() -> (Context2) -> Void {
+//         { _ in }
+//     }
+// }
+
+@MainActor
+final class Context2 {
+    private unowned var parent: Context2? = nil
+    var associatedLayer: Layer? = nil
+
+    func insert(layer: Layer) {
+        print("insert")
+        associatedLayer?.addChild(layer)
     }
 
-    fileprivate func build() -> (Context2<PlatformNode>) -> Void {
-        { _ in }
+    // TODO: track insertion and perform removal
+    func createChildContext() -> Context2 {
+        let c = Context2()
+        c.parent = self
+
+        return c
+    }
+
+    public func startComponent(block: () -> some UI2) {
+        block().mount(context: self)
     }
 }
 
-final class Context2<PlatformNode: AnyObject> {
-    private unowned let parent: Context2<PlatformNode>? = nil 
-    private let associatedComponent: (any UI2)? = nil
-
-    fileprivate func isContainer() {
-
-    }
+struct UIContext {
 }

@@ -1,31 +1,46 @@
 import Wayland
 
+// TODO: fast damage rect lookup
+@MainActor
 class Compositor {
+    nonisolated(unsafe) static var current: Compositor?
+
+    private let renderer: UIRenderer
     let rootLayer: Layer
     var damagedLayers: [Layer: [Invalidation]] = [:]
-    private var dirty: Bool = false
+    var isFirstFrame: Bool = true
+
+    /// aka needed render loop
     var shouldRedraw: Bool {
-        dirty || animationFrameRequests.count != 0
+        isFirstFrame || animationFrameRequests.count != 0 || damagedLayers.count != 0
     }
 
+    private var renderTask: Task<Void, any Error>? = nil
     private var animationFrameRequests: [AnimationFrameRequest] = []
 
-    init(size: SIMD2<Float>) {
+    init(renderer: UIRenderer, size: SIMD2<Float>) {
+        self.renderer = renderer
         rootLayer = Layer(rect: Rect(top: 0, left: 0, width: size.x, height: size.y))
         rootLayer.compositor = self
+
+        scheduleRedraw()
     }
 
     func invalidateLayer(layer: Layer, invalidation: Invalidation) {
         // tell someone we need rerender, kinda requestAnimationFrame
-        dirty = true
+        // print("who tf call this \(layer.bounds) \(invalidation)")
         self.damagedLayers[layer, default: []].append(invalidation)
+
+        scheduleRedraw()
     }
 
     func requestAnimationFrame(_ block: @escaping AnimationCallback) {
         animationFrameRequests.append(AnimationFrameRequest(callback: block, createdAt: .now))
+
+        // scheduleRedraw()
     }
 
-    func runAnimation() {
+    private func runAnimation() {
         var toRemove: [Int] = []
         for (index, a) in animationFrameRequests.enumerated() {
             if a.run() == .done {
@@ -38,28 +53,31 @@ class Compositor {
         }
     }
 
-    func flushDrawCommand() -> DrawInfo {
+    private func flushDrawCommand() -> DrawInfo {
         defer {
             damagedLayers = [:]
-            dirty = false
         }
 
         // this is just redraw everything
         var commands: [DrawCommand] = []
 
-        func traverse(layer: Layer, commands: inout [DrawCommand], transformation: AffineMatrix) {
-            let t = layer.totalTransformation
+        func traverse(layer: Layer, transformation: AffineMatrix) {
+            // let t = layer.totalTransformation
             commands.append(contentsOf: layer.getLayerDrawCommands(transformation: transformation))
 
             for c in layer.children {
-                traverse(layer: c, commands: &commands, transformation: transformation * t)
+                traverse(layer: c, transformation: transformation)
             }
         }
 
-        traverse(layer: rootLayer, commands: &commands, transformation: .identity)
+        traverse(layer: rootLayer, transformation: .identity)
+        // print(commands)
 
-        return DrawInfo(
+        let d = DrawInfo(
             damagedArea: [rootLayer.bounds], commands: groupDrawCommand(commands: commands))
+
+        return d
+        
         // var commands: [DrawCommand] = []
         // // damagedLayers
 
@@ -68,6 +86,26 @@ class Compositor {
         // return info
     }
 
+    private func scheduleRedraw() {
+        if renderTask != nil {
+            return
+        }
+        renderTask = Task {
+            while !Task.isCancelled && shouldRedraw {
+                isFirstFrame = false
+                // print("animationFrame: \(animationFrameRequests)")
+                let nextFrameTime = ContinuousClock.now.advanced(by: .milliseconds(12))
+                self.runAnimation()
+                let info = self.flushDrawCommand()
+                // we should wait for frame before running any animation
+                await renderer.render(info: info)
+                try await Task.sleep(until: nextFrameTime)
+                // print("did redraw")
+            }
+            // print("bruh")
+            renderTask = nil
+        }
+    }
 }
 
 /// Alternative: CALayer style
