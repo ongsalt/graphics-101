@@ -12,7 +12,7 @@ public class ObservationSource<T> where T: Sendable {
     private var observationTask: Task<Void, any Error>!
 
     init(emit: @Sendable @escaping () -> T) {
-        signal = Signal(createZeroedStruct(of: T.self))
+        signal = Signal(emit())
         let observations = Observations {
             emit()
         }
