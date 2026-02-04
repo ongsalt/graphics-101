@@ -1,47 +1,60 @@
-import Dispatch
-import Foundation
-@_spi(SwiftUI) import Observation
-
 // effect scope own it
 
-// its in its parent isolation context
-// its not safe tho
-public final class Effect: @unchecked Sendable {
+// this shi is not thread safe
+public class Effect: EffectScope, Subscriber {
+    internal var dependencies: [Int: any Source] = [:]
     private let tags: [String]?
     let fn: () -> Void
-
-    var stopped: Bool = false
 
     @discardableResult
     public init(tags: [String]? = nil, _ fn: @escaping () -> Void) {
         self.tags = tags
         self.fn = fn
 
+        super.init()
         self.update()
     }
 
-    func destroy() {
-        stopped = true
+    deinit {
+        // should be automatically run after destroy becuase its refcount will be 0
+        // print("[effect] deinited \(String(describing: tags))")
+    }
+
+    override public func destroy() {
+        // unlink
+        let deps = dependencies.values
+        for d in deps {
+            Effect.unlink(source: d, subscriber: self)
+        }
+
+        for c in children {
+            c.destroy()
+        }
+
+        dependencies = [:]
+        children = []
     }
 
     func update() {
-        // TrackingContext.shared.currentEffectScope = self
-
-        withObservationTracking {
-            self.fn()
-        } didSet: { [weak self] tracking in
-            // if tracking.changed did not contain stuff outside of ignored scope then just pretend nothing happen
-            tracking.cancel()
-
-            // switch back to current thread somehow
-            if let self = self {
-                if !self.stopped {
-                    self.update()
-                }
-            } else {
-                print("effect owner is not yet implemented")
-            }
+        let pop = TrackingContext.shared.push(scope: self, subscriber: self)
+        defer {
+            pop()
         }
 
+        dependencies = [:]
+
+        self.fn()
+    }
+}
+
+extension Effect {
+    static func link(source: any Source, subscriber: any Subscriber) {
+        subscriber.addDependency(source)
+        source.addSubscriber(subscriber)
+    }
+
+    static func unlink(source: any Source, subscriber: any Subscriber) {
+        subscriber.removeDependency(source)
+        source.removeSubscriber(subscriber)
     }
 }

@@ -17,3 +17,13 @@ func Counter2(props: Bind<Int>) -> some UI2 {
         }
     }
 }
+
+// func Counter2(props: Bind<Int>) -> some UI2 {
+//     let count = Signal(0)
+
+//     return #ui {
+//         Text("props: \(props)")
+//         Text("count: \(count)")
+//     }
+// }
+

@@ -1,7 +1,6 @@
-import Observation
-
-
 public class Computed<T>: EffectScope, Source, Subscriber {
+    internal var subscribers: [Int: any Subscriber] = [:]
+    internal var dependencies: [Int: any Source] = [:]
     private let tags: [String]?
     let fn: () -> T
 
@@ -9,6 +8,7 @@ public class Computed<T>: EffectScope, Source, Subscriber {
 
     private lazy var innerValue: T = compute()
     public var value: T {
+        track()
         if dirty {
             innerValue = compute()
             dirty = false
@@ -23,25 +23,45 @@ public class Computed<T>: EffectScope, Source, Subscriber {
     }
 
     override public func destroy() {
+        let deps = dependencies.values
+        for d in deps {
+            Effect.unlink(source: d, subscriber: self)
+        }
 
         super.destroy()
+    }
+
+    func track() {
+        guard let subscriber = TrackingContext.shared.currentSubscriber else {
+            return
+        }
+
+        Effect.link(source: self, subscriber: subscriber)
+    }
+
+    func trigger() {
+        let left = subscribers.values
+        subscribers = [:]
+        for s in left {
+            s.update()
+        }
     }
 
     func update() {
         self.dirty = true
         // TODO: detect change for T: Eq
+
+        trigger()
     }
 
     func compute() -> T {
-        let previousScope: EffectScope? = TrackingContext.shared.currentEffectScope
-        TrackingContext.shared.currentEffectScope = self
-
+        let pop = TrackingContext.shared.push(scope: self, subscriber: self)
         defer {
-            TrackingContext.shared.currentEffectScope = previousScope
+            pop()
         }
-        
+
+        dependencies = [:]
         return self.fn()
     }
 }
-
 

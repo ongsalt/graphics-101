@@ -77,7 +77,7 @@ struct Graphics101 {
 
         // renderQueue.performBs()
 
-        launchCounter()
+        // launchCounter()
 
         Task {
             while !Task.isCancelled {

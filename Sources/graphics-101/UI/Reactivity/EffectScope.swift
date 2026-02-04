@@ -7,19 +7,15 @@ open class EffectScope {
         self.parent?.addChildren(effect: self)
     }
 
-
-    convenience public init(_ fn: () -> Void) {
+    convenience public init(_ fn: @escaping () -> Void) {
         self.init()
-        self.run(fn)
-    }
 
-    func run(_ fn: () -> Void) {
-        let previous =  TrackingContext.shared.currentEffectScope
-        TrackingContext.shared.currentEffectScope = self
-        
+        let pop = TrackingContext.shared.push(scope: self)
+        defer {
+            pop()
+        }
+
         fn()
-        
-        TrackingContext.shared.currentEffectScope = previous
     }
 
     func addChildren(effect: EffectScope) {
@@ -30,5 +26,6 @@ open class EffectScope {
         for c in children {
             c.destroy()
         }
+        children = []
     }
 }

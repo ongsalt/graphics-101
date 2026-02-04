@@ -23,9 +23,13 @@ use [naga](https://github.com/gfx-rs/wgpu/tree/trunk/naga) to compile wgsl to sp
 ok, it doesnt support push constant, use glslc instead
 
 ## TODO
+- Nuke cuurent signal impl
+    - stop using Observation framework becuase no untrack
+    - force everything to be main thread/actor only
+    - build our own observation macro for property tracking
+        - reflection for now
 - command buffer/pool/whatever per frame in flight
 - clip
-- stop using Observation framework becuase no untrack
 - concurrency safe signal
 - think about pixel perfect stuff
 - distance field of composited(?) shape
@@ -37,18 +41,5 @@ ok, it doesnt support push constant, use glslc instead
     - roundedrect
     - roundedrect (superellipse)
     - roundedrect (squircle)
-
-### draw command recording
-- each node will emit
-1. our draw command
-2. damaged region 
-3. some other info (used in flutter)
-
-- combine damaged node draw command and other node in that region 
-- convert our draw command to vulkan's
-    - need to merge/reorder some command to minimize work
-- set scissor to damaged region
-- send it to gpu
-
 
 

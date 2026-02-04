@@ -36,6 +36,9 @@ class FCRender<PlatformNode: AnyObject>: UI2 {
         setup(context)
         return []
     }
+
+
+    // view modifier here????
 }
 
 class FCBuilder<PlatformNode: AnyObject> {
