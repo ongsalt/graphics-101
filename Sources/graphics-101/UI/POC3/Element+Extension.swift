@@ -1,8 +1,6 @@
-class UIBox: UIElement {
+typealias UIBox = UIElement
 
-}
-
-extension UIBox {
+extension UIElement {
     // MARK: - Modifiers
     // These now simply store the closure into our local properties.
 

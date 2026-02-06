@@ -29,6 +29,7 @@ class UIElement: Identifiable {
     }
 
     func requestRelayout() {
+        print("whattt")
         self.parent?.relayout(child: self)
     }
 
@@ -40,8 +41,9 @@ class UIElement: Identifiable {
         // if self size is change then notify parent
         // tell parent to reMeasure
         // TODO: think what needed to trigger relayout, what can be update directly
-        //
+        // print("relayouting")
         child.parentData!.needRemeasure = true
+        child.parentData!.needReplace = true
         let previousSize = child.parentData!.decidedSize
         let newSize = child.measure(constraints: child.parentData!.previousConstraints)
 

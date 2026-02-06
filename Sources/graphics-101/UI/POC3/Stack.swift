@@ -1,4 +1,4 @@
-class ZStack: UIBox {
+class ZStack: UIElement {
     override func measure(constraints: Constraints) -> SIMD2<Float> {
         var w: Float = 0
         var h: Float = 0
@@ -42,7 +42,7 @@ class ZStack: UIBox {
             let childArea = Rect(topLeft: area.topLeft, size: child.parentData!.decidedSize)
             child.place(area: childArea)
 
-            child.parentData!.finalRect = area
+            child.parentData!.finalRect = childArea
             child.parentData!.needReplace = false
         }
     }
