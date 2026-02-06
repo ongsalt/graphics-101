@@ -12,7 +12,7 @@ class UIRuntime {
         rootElement.parentData = ParentData(decidedSize: .zero, needRemeasure: true)
         rootElement.parentLayer = rootLayer
         let area = rootElement.measure(constraints: Constraints(size: rootLayer.bounds.size))
-        rootElement.place(area: Rect(topLeft: .zero, size: area))
+        rootElement.place(area: Rect(topLeft: rootElement._offset, size: area))
     }
 }
 

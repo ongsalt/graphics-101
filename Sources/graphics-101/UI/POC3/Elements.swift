@@ -88,6 +88,7 @@ class UIElement: Identifiable {
     }
 }
 
+
 extension UIElement: Equatable {
     nonisolated static func == (lhs: UIElement, rhs: UIElement) -> Bool {
         lhs.id == rhs.id
@@ -102,49 +103,3 @@ struct ParentData {
     var needReplace: Bool = true
 }
 
-class ZStack: UIElement {
-    override func measure(constraints: Constraints) -> SIMD2<Float> {
-
-        var w: Float = 0
-        var h: Float = 0
-
-        for child in children {
-            // needX is different for each container type
-            let size =
-                if child.parentData!.needRemeasure {
-                    child.measure(constraints: constraints)
-                } else {
-                    child.parentData!.decidedSize
-                }
-
-            if size != child.parentData!.decidedSize {
-                child.parentData!.needReplace = true
-            }
-
-            w = max(w, size.x)
-            h = max(w, size.y)
-
-            child.parentData!.previousConstraints = constraints
-            child.parentData!.decidedSize = constraints.clamp(size)
-            child.parentData!.needRemeasure = false
-        }
-
-        return constraints.clamp([w, h])
-    }
-
-    override func place(area: Rect) {
-        super.place(area: area)
-        // var area = area
-
-        for child in children {
-            if !child.parentData!.needReplace {
-                continue
-            }
-            let childArea = Rect(topLeft: area.topLeft, size: child.parentData!.decidedSize)
-            child.place(area: childArea)
-
-            child.parentData!.finalRect = area
-            child.parentData!.needReplace = false
-        }
-    }
-}

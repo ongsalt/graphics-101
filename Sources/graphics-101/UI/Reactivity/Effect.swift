@@ -22,7 +22,7 @@ public class Effect: EffectScope, Subscriber {
 
     override public func destroy() {
         // unlink
-        let deps = dependencies.values
+        let deps: Dictionary<Int, any Source>.Values = dependencies.values
         for d in deps {
             Effect.unlink(source: d, subscriber: self)
         }

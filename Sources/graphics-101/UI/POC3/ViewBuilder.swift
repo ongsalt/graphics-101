@@ -35,23 +35,32 @@ struct ViewBuilder {
     // }
 }
 
-class View: UIElement {
+class View {
     let builder: () -> [UIElement]
 
     init(_builder: @escaping () -> [UIElement]) {
         self.builder = _builder
-        super.init()
     }
 
     init(@ViewBuilder _ builder: @escaping () -> [UIElement]) {
         self.builder = builder
-        super.init()
     }
 
     func build() -> [UIElement] {
         builder()
     }
 }
+
+extension ZStack {
+    convenience init(@ViewBuilder children: () -> View) {
+        self.init()
+        // this should be run after mounted
+        for c in children().build() {
+            addChild(element: c)
+        }
+    }
+}
+
 
 @MainActor
 private struct What {

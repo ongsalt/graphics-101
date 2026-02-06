@@ -33,11 +33,11 @@ extension Constraints {
 
 extension Constraints {
     var minSize: SIMD2<Float> {
-        [minWidth, minHeight]
+        SIMD2(minWidth, minHeight)
     }
 
     var maxSize: SIMD2<Float> {
-        [maxWidth, maxHeight]
+        SIMD2(maxWidth, maxHeight)
     }
 
     func clamp(_ size: SIMD2<Float>) -> SIMD2<Float> {

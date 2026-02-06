@@ -48,9 +48,11 @@ struct Graphics101 {
 
         let runtime = UIRuntime(
             layer: compositor.rootLayer, 
-            element: BaseBox()
-                .background(.red)
-                .size([100, 100])
+            element: ZStack {
+                UIBox()
+                    .background(.red)
+                    .size([100, 100])
+            }.background(.white)
         )
         runtime.start()
 
