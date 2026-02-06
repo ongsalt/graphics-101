@@ -22,10 +22,12 @@ func Counter() -> some UIElement {
         UIBox()
             .background(.blue)
             .size([100, 100])
+            .cornerRadius(36)
         UIBox()
-            .background(.grey)
+            .background(.white)
             .size([100, 100])
-            .shadow(color: .black.multiply(opacity: 0.2), blur: 24)
+            .cornerRadius(36)
+            .shadow(color: .black.multiply(opacity: 0.3), blur: 24)
             // .withLayer { layer in
             //     layer.
             // }

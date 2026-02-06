@@ -46,7 +46,7 @@ struct RoundedRectangleDrawCommand {
                 color: SIMD4(color[i].r, color[i].g, color[i].b, color[i].a),
                 sizing: SIMD4(center.x, center.y, size.x, size.y),
                 borderRadiusAndRotation: SIMD4(min(borderRadius, size.min() / 2), rotation, 0, 0),
-                borderWidthAndDegree: SIMD4(borderWidth, cornerDegree, 0, 0),
+            borderWidthAndDegree: SIMD4(borderWidth, cornerDegree, 0, 0),
                 borderColor: SIMD4(borderColor.r, borderColor.g, borderColor.b, borderColor.a),
                 shadowParams: SIMD4(shadowOffset.x, shadowOffset.y, shadowBlur, mode),
                 transformC1: transform.c1,

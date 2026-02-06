@@ -35,6 +35,15 @@ float sdRoundedRectSuperellipse(vec2 p, vec2 halfBox, float radius, float degree
     return inD + outD;
 }
 
+// Abramowitz-Stegun erf approximation (max error ~1.5e-7)
+float erfApprox(float x) {
+    float sign = x < 0.0 ? -1.0 : 1.0;
+    x = abs(x);
+    float t = 1.0 / (1.0 + 0.3275911 * x);
+    float y = 1.0 - (((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t) * exp(-x * x);
+    return sign * y;
+}
+
 void main() {
     mat4 transform = mat4(inTransformC1, inTransformC2, inTransformC3, inTransformC4);
     vec2 localPos = (transform * vec4(gl_FragCoord.xy, 0.0, 1.0)).xy;
@@ -54,7 +63,8 @@ void main() {
             vec2 ps = p - inShadowParams.xy;
             float ds = sdRoundedRectSuperellipse(ps, box, borderRadiusAndRotation.x, borderWidthAndDegree.y);
             float outside = max(ds, 0.0);
-            shadowAlpha = 1.0 - smoothstep(0.0, inShadowParams.z, outside);
+            float t = outside / max(inShadowParams.z, 1e-4);
+            shadowAlpha = 1.0 - (0.5 + 0.5 * erfApprox(t * 1.41421356));
         }
         outFragColor = inColor * shadowAlpha;
         return;
