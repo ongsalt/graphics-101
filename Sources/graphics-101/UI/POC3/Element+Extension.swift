@@ -3,6 +3,13 @@ typealias UIBox = UIElement
 extension UIElement {
     // MARK: - Modifiers
     // These now simply store the closure into our local properties.
+    @discardableResult
+    func withLayer(_ fn: @escaping (Layer) -> Void) -> Self {
+        // Effect {
+        fn(self.layer)
+        // }
+        return self
+    }
 
     @discardableResult
     func z(_ value: @autoclosure @escaping () -> Float) -> Self {
@@ -31,7 +38,9 @@ extension UIElement {
     }
 
     @discardableResult
-    func size(width: @autoclosure @escaping () -> Float, height: @autoclosure @escaping () -> Float) -> Self {
+    func size(width: @autoclosure @escaping () -> Float, height: @autoclosure @escaping () -> Float)
+        -> Self
+    {
         Effect {
             self._width = width()
             self._height = height()
@@ -83,12 +92,32 @@ extension UIElement {
     }
 
     @discardableResult
+    func cornerDegree(_ value: @autoclosure @escaping () -> Float) -> Self {
+        Effect { self.layer.cornerDegree = value() }
+        return self
+    }
+
+    @discardableResult
     func border(
         width: @autoclosure @escaping () -> Float, color: @autoclosure @escaping () -> Color
     ) -> Self {
         Effect {
             self.layer.borderWidth = width()
             self.layer.borderColor = color()
+        }
+        return self
+    }
+
+    @discardableResult
+    func shadow(
+        color: @autoclosure @escaping () -> Color,
+        blur: @autoclosure @escaping () -> Float,
+        offset: @autoclosure @escaping () -> SIMD2<Float> = .zero
+    ) -> Self {
+        Effect {
+            self.layer.shadowColor = color()
+            self.layer.shadowBlur = blur()
+            self.layer.shadowOffset = offset()
         }
         return self
     }

@@ -62,11 +62,11 @@ class Compositor {
         var commands: [DrawCommand] = []
 
         func traverse(layer: Layer, transformation: AffineMatrix) {
-            // let t = layer.totalTransformation
-            commands.append(contentsOf: layer.getLayerDrawCommands(transformation: transformation))
+            let combined = transformation * layer.totalTransformation
+            commands.append(contentsOf: layer.getLayerDrawCommands(transformation: combined))
 
             for c in layer.children {
-                traverse(layer: c, transformation: transformation)
+                traverse(layer: c, transformation: combined)
             }
         }
 

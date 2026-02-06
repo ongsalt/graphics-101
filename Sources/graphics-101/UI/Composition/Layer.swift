@@ -47,8 +47,32 @@ class Layer: Identifiable {
         }
     }
 
+    var cornerDegree: Float = 4 {
+        didSet {
+            invalidate(.colors)
+        }
+    }
+
     var borderWidth: Float = 0
     var borderColor: Color = .transparent
+
+    var shadowColor: Color = .transparent {
+        didSet {
+            invalidate(.colors)
+        }
+    }
+
+    var shadowBlur: Float = 0 {
+        didSet {
+            invalidate(.colors)
+        }
+    }
+
+    var shadowOffset: SIMD2<Float> = .zero {
+        didSet {
+            invalidate(.colors)
+        }
+    }
 
     var backgroundColor: Color = .transparent {
         didSet {
@@ -118,12 +142,39 @@ class Layer: Identifiable {
     func getLayerDrawCommands(transformation: AffineMatrix) -> [DrawCommand] {
         var commands: [DrawCommand] = []
 
+        let inverseTransform = transformation.fastInverse()
+
+        if shadowBlur > 0 && shadowColor.a > 0 {
+            let shadow = RoundedRectangleDrawCommand(
+                color: duplicated(self.shadowColor.premulitplied()),
+                center: self.absoluteFrame.center,
+                size: self.absoluteFrame.size * scale,
+                borderRadius: self.cornerRadius,
+                rotation: self.rotation,
+                borderWidth: 0,
+                borderColor: .transparent,
+                shadowBlur: self.shadowBlur * scale,
+                shadowOffset: self.shadowOffset * scale,
+                cornerDegree: self.cornerDegree,
+                transform: inverseTransform,
+                mode: 1
+            )
+            commands.append(DrawCommand.roundedRectangle(shadow))
+        }
+
         let bg = RoundedRectangleDrawCommand(
             color: duplicated(self.backgroundColor.multiply(opacity: opacity).premulitplied()),
             center: self.absoluteFrame.center,
             size: self.absoluteFrame.size * scale,
             borderRadius: self.cornerRadius,
-            rotation: self.rotation
+            rotation: self.rotation,
+            borderWidth: self.borderWidth * scale,
+            borderColor: self.borderColor.premulitplied(),
+            shadowBlur: 0,
+            shadowOffset: .zero,
+            cornerDegree: self.cornerDegree,
+            transform: inverseTransform,
+            mode: 0
         )
         commands.append(DrawCommand.roundedRectangle(bg))
 
