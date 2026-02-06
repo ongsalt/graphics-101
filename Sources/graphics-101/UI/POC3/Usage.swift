@@ -2,17 +2,19 @@
 func Counter() -> some UIElement {
     let count: Signal<Float> = Signal(0.0)
 
-    Task {
-        while !Task.isCancelled {
-            try await Task.sleep(for: .seconds(1))
-            count.value += 1
+    Compositor.current?.requestAnimationFrame { time in
+        count.value = Float(time.attoseconds / 1_000_000_000_000_000)
+        // print(count.value)
+        if count.value > 4800 {
+            return .done
         }
+        return .ongoing
     }
 
     return ZStack {
         UIBox()
             .background(.red)
             .size([100, 100])
-            .offset([100 * count.value, 100])
+            .offset([count.value / 4, 100])
     }
 }

@@ -31,6 +31,16 @@ extension UIElement {
     }
 
     @discardableResult
+    func size(width: @autoclosure @escaping () -> Float, height: @autoclosure @escaping () -> Float) -> Self {
+        Effect {
+            self._width = width()
+            self._height = height()
+            self.requestRelayout()
+        }
+        return self
+    }
+
+    @discardableResult
     func scale(_ value: @autoclosure @escaping () -> Float) -> Self {
         Effect { self.layer.scale = value() }
         return self

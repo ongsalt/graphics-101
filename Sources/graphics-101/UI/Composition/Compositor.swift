@@ -77,7 +77,7 @@ class Compositor {
             damagedArea: [rootLayer.bounds], commands: groupDrawCommand(commands: commands))
 
         return d
-        
+
         // var commands: [DrawCommand] = []
         // // damagedLayers
 
@@ -93,14 +93,10 @@ class Compositor {
         renderTask = Task {
             while !Task.isCancelled && shouldRedraw {
                 isFirstFrame = false
-                // print("animationFrame: \(animationFrameRequests)")
-                let nextFrameTime = ContinuousClock.now.advanced(by: .milliseconds(12))
-                self.runAnimation()
-                let info = self.flushDrawCommand()
-                // we should wait for frame before running any animation
-                await renderer.render(info: info)
-                try await Task.sleep(until: nextFrameTime)
-                // print("did redraw")
+                await renderer.render {
+                    self.runAnimation()
+                    return self.flushDrawCommand()
+                }
             }
             // print("bruh")
             renderTask = nil

@@ -70,9 +70,9 @@ class UIRenderer {
         }
     }
 
-    func render(info: DrawInfo) async {
+    func render(info: () -> DrawInfo) async {
         await renderQueue.perform(offThread: true) { commandBuffer, swapChain in
-            self.apply(info: info, swapChain: swapChain, commandBuffer: commandBuffer)
+            self.apply(info: info(), swapChain: swapChain, commandBuffer: commandBuffer)
         }
     }
 }

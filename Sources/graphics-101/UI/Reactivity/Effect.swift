@@ -6,8 +6,9 @@ public class Effect: EffectScope, Subscriber {
     private let tags: [String]?
     let fn: () -> Void
 
+    // TODO: effect priority / batching / auto flush (ui)  
     @discardableResult
-    public init(tags: [String]? = nil, _ fn: @escaping () -> Void) {
+    public init(priority: Int = 0, tags: [String]? = nil, _ fn: @escaping () -> Void) {
         self.tags = tags
         self.fn = fn
 
