@@ -1,40 +1,9 @@
-// class Text2: UI2 {
-//     typealias PlatformNode = Layer
-
-//     private let text: ReadOnlyBinding<String>
-
-//     convenience init(_ text: @autoclosure @escaping () -> String) {
-//         self.init(ReadOnlyBinding(getter: text))
-//     }
-
-//     init(_ text: Bind<String>) {
-//         self.text = text
-//     }
-
-//     // should be called setup(context: inout ComponentContext)
-//     func setupWidget(context: Context2<PlatformNode>) {
-//         // let node = ActualNode()
-//         // context.currentNode.children.append(node)
-
-//         // context.effect { ... }
-//         let effect = Effect {
-//             print("changed/setup \(self.text.value)")
-//         }
-
-//         // context.onDestroy {
-//         //     effect.destroy()
-
-//         //     // or should this be auto
-//         //     node.remove()
-//         // }
-//     }
-// }
-
 @MainActor
 class UIBox: UI2 {
     typealias PlatformNode = Layer
     var layer: Layer? = nil
 
+    // Maybe do this using propertywrapper
     private var _z: (() -> Float)?
     private var _bounds: (() -> Rect)?
     private var _scale: (() -> Float)?
@@ -58,13 +27,6 @@ class UIBox: UI2 {
         self.apply(to: layer!)
 
         context.insert(layer: layer!)
-
-        // context.onDestroy {
-        //     effect.destroy()
-
-        //     // or should this be auto
-        //     node.remove()
-        // }
     }
 }
 

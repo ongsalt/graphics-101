@@ -6,7 +6,6 @@ class DrawController {
     func addDamageRegion() {}
 }
 
-struct Constraints {}
 struct Size {}
 
 protocol Widget {

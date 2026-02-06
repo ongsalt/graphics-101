@@ -16,6 +16,15 @@ struct Rect {
     }
 
     init(
+        topLeft: SIMD2<Float>, size: SIMD2<Float>
+    ) {
+        self.top = topLeft.y
+        self.left = topLeft.x
+        self.width = size.x
+        self.height = size.y
+    }
+
+    init(
         center: SIMD2<Float>, size: SIMD2<Float>
     ) {
         self.top = center.y - size.y / 2
@@ -47,11 +56,23 @@ struct Rect {
     }
 
     var topLeft: SIMD2<Float> {
-        SIMD2(left, top)
+        get {
+            SIMD2(left, top)
+        }
+        set {
+            left = newValue.x
+            top = newValue.y
+        }
     }
 
     var size: SIMD2<Float> {
-        SIMD2(width, height)
+        get {
+            SIMD2(width, height)
+        }
+        set {
+            width = newValue.x
+            height = newValue.y
+        }
     }
 
     var atOrigin: Rect {

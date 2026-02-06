@@ -46,13 +46,16 @@ struct Graphics101 {
         // l.backgroundColor = .red
         // compositor.rootLayer.addChild(l)
 
-        let runtime = UIRuntime(root: compositor.rootLayer) {
-            Counter2(props: 1)
-        }
+        let runtime = UIRuntime(
+            layer: compositor.rootLayer, 
+            element: BaseBox()
+                .background(.red)
+                .size([100, 100])
+        )
+        runtime.start()
 
         // print("\(compositor.rootLayer.children[0].bounds)")
 
-        Unmanaged.passRetained(runtime)
 
         // renderQueue.performBs()
 

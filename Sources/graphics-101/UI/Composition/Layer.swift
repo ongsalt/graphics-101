@@ -1,5 +1,5 @@
 @MainActor
-class Layer {
+class Layer: Identifiable {
     unowned var parent: Layer? = nil
     var children: [Layer] = []
 
@@ -13,16 +13,18 @@ class Layer {
     }
 
     var z: Float = 1
-    // This should be readonly
-    // var frame: Rect = .zero {
-    //     didSet {
-    //         invalidate(.transformations)
-    //     }
-    // }
-    var frame: Rect {
-        bounds
+    var bounds: Rect = .zero {  // mostly always at 0,0 TODO: make it not
+        didSet {
+            invalidate(.transformations)
+        }
     }
-    var bounds: Rect = .zero {
+
+    // TODO: calculate this with transform
+    var frame: Rect {
+        bounds.atOrigin.offset(position)
+    }
+
+    var position: SIMD2<Float> = .zero {
         didSet {
             invalidate(.transformations)
         }
@@ -85,14 +87,28 @@ class Layer {
         self.bounds = rect
     }
 
-    func addChild(_ layer: Layer) {
+    func addChild(_ layer: Layer, after position: Int? = nil) {
+        if let position {
+            children.insert(layer, at: position)
+        } else {
+            children.append(layer)
+        }
+
+        layer.parent = self
+
         if let compositor {
             layer.compositor = compositor
             // compositor.invalidateLayer(layer: layer, invalidation: .existence)
         }
+    }
 
-        layer.parent = self
-        self.children.append(layer)
+    func removeChild(_ layer: Layer) {
+        guard let index = children.firstIndex(of: layer) else {
+            return
+        }
+
+        self.children.remove(at: index)
+        layer.parent = nil
     }
 
     func invalidate(_ type: Invalidation) {
@@ -115,7 +131,6 @@ class Layer {
     }
 }
 
-extension Layer: Identifiable {}
 extension Layer: Equatable {
     nonisolated static func == (lhs: Layer, rhs: Layer) -> Bool {
         lhs.id == rhs.id

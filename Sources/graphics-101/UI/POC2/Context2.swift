@@ -40,15 +40,12 @@ class FCRender: UI2 {
     // view modifier here????
 }
 
-// class FCBuilder<PlatformNode: AnyObject> {
-//     public func startComponent(block: () -> Void) {
-
-//     }
-
-//     fileprivate func build() -> (Context2) -> Void {
-//         { _ in }
-//     }
-// }
+struct UIDefinition {
+    let block: () -> [any UI2]
+    init(@ViewBuilder _ block: @escaping () -> () -> [any UI2]) {
+        self.block = block()
+    }
+}
 
 @MainActor
 final class Context2 {

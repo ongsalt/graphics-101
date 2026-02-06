@@ -1,13 +1,21 @@
 @MainActor
 class UIRuntime {
-    let root: Layer
+    let rootLayer: Layer
+    let rootElement: UIElement
 
-    init(root: Layer, setupFn: () -> some UI2) {
-        self.root = root
-        let context = Context2()
-        context.associatedLayer = root
+    init(layer: Layer, element: UIElement) {
+        self.rootLayer = layer
+        self.rootElement = element
+    }
 
-        let ui = setupFn()
-        ui.mount(context: context)
+    func start() {
+        rootElement.parentData = ParentData(decidedSize: .zero, needRemeasure: true)
+        rootElement.parentLayer = rootLayer
+        let area = rootElement.measure(constraints: Constraints(size: rootLayer.bounds.size))
+        rootElement.place(area: Rect(topLeft: .zero, size: area))
     }
 }
+
+/// 1. run the function (to setup signal and stuff)
+/// 2. init views return by function including child component
+///
