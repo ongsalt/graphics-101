@@ -20,6 +20,7 @@ struct Graphics101 {
         window.show()
 
         let token = RunLoop.main.addListener(on: [.beforeWaiting]) { _ in
+            // print("Will sleep")
             display.dispatchPending()
             display.flush()
         }
@@ -47,13 +48,12 @@ struct Graphics101 {
         // compositor.rootLayer.addChild(l)
 
         let runtime = UIRuntime(
-            layer: compositor.rootLayer, 
+            layer: compositor.rootLayer,
             element: Counter()
         )
         runtime.start()
 
         // print("\(compositor.rootLayer.children[0].bounds)")
-
 
         // renderQueue.performBs()
 

@@ -102,6 +102,16 @@ class RenderQueue {
         return commandBuffer
     }
 
+    func acquireNextImage() async -> (VkImage, VkImageView, UInt32) {
+        await withUnsafeContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async { [state] in
+                let res = state.swapChain.acquireNextImage()
+
+                continuation.resume(returning: res)
+            }
+        }
+    }
+
     func perform(
         blocking: Bool = false, offThread: Bool = false, waitVsync: Bool = false,
         _ block: (VkCommandBuffer, SwapChain) -> Void
@@ -124,7 +134,8 @@ class RenderQueue {
             }
         }
 
-        let (image, imageView, imageIndex) = swapChain.acquireNextImage()
+        // let (image, imageView, imageIndex) = swapChain.acquireNextImage()
+        let (image, imageView, imageIndex) = await acquireNextImage()
 
         // update shader data: https://www.howtovulkan.com/#shader-data-buffers
         // well, we have no shader data yet
