@@ -11,10 +11,16 @@ func Counter() -> some UIElement {
         return .ongoing
     }
 
-    return ZStack {
+    return VStack(gap: 12) {
         UIBox()
             .background(.red)
             .size([100, 100])
-            .offset([count.value / 4, 100])
+            .offset([count.value / 4, 0])
+        UIBox()
+            .background(.green)
+            .size([100, 100])
+        UIBox()
+            .background(.blue)
+            .size([100, 100])
     }
 }

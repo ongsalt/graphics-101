@@ -29,7 +29,7 @@ class UIElement: Identifiable {
     }
 
     func requestRelayout() {
-        print("whattt")
+        // print("whattt")
         self.parent?.relayout(child: self)
     }
 
@@ -59,6 +59,19 @@ class UIElement: Identifiable {
     func replace(child: UIElement) {
         child.parentData!.needReplace = true
         child.place(area: child.parentData!.finalRect)
+    }
+
+
+    func addChild(_ view: View) {
+        for e in view.build() {
+            addChild(element: e)
+        }
+    }
+
+    func addChild(_ elements: some Sequence<UIElement>) {
+        for e in elements {
+            addChild(element: e)
+        }
     }
 
     func addChild(element: UIElement, after position: Int? = nil) {

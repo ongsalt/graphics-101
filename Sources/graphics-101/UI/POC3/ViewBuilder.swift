@@ -54,10 +54,7 @@ class View {
 extension ZStack {
     convenience init(@ViewBuilder children: () -> View) {
         self.init()
-        // this should be run after mounted
-        for c in children().build() {
-            addChild(element: c)
-        }
+        addChild(children())
     }
 }
 
