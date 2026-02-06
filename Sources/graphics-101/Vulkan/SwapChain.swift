@@ -45,7 +45,8 @@ final class SwapChain {
         imageViews = Self.createImageViews(
             device: device, swapChainImages: images, swapChainSurfaceFormat: swapChainSurfaceFormat)
 
-        let c = Self.createFence(device: device, count: framesInFlightCount, swapChainImageCount: images.count)
+        let c = Self.createFence(
+            device: device, count: framesInFlightCount, swapChainImageCount: images.count)
         self.fences = c.fences
         self.presentSemaphores = c.present
         self.renderSemaphore = c.render
@@ -107,9 +108,10 @@ final class SwapChain {
     private static func chooseSwapPresentMode(from availablePresentModes: [VkPresentModeKHR])
         -> VkPresentModeKHR
     {
-        return availablePresentModes.contains(VK_PRESENT_MODE_MAILBOX_KHR)
-            ? VK_PRESENT_MODE_MAILBOX_KHR
-            : VK_PRESENT_MODE_FIFO_KHR
+        // availablePresentModes.contains(VK_PRESENT_MODE_MAILBOX_KHR)
+        //     ? VK_PRESENT_MODE_MAILBOX_KHR
+        //     : VK_PRESENT_MODE_FIFO_KHR
+        VK_PRESENT_MODE_FIFO_KHR
     }
 
     private static func chooseSwapExtent(
@@ -247,7 +249,8 @@ final class SwapChain {
 
         var fences = Array(repeating: VkFence(bitPattern: 0), count: count)
         var semaphores = Array(repeating: VkSemaphore(bitPattern: 0), count: count)
-        var renderSemaphores = Array(repeating: VkSemaphore(bitPattern: 0), count: swapChainImageCount)
+        var renderSemaphores = Array(
+            repeating: VkSemaphore(bitPattern: 0), count: swapChainImageCount)
 
         for i in 0..<count {
             vkCreateFence(device, &fenceCI, nil, &fences[i]).expect("Cannot create fence")
