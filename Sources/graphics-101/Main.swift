@@ -4,6 +4,43 @@ import Foundation
 import Synchronization
 import Wayland
 
+@MainActor
+func Counter() -> some UIElement {
+    let count: Signal<Float> = Signal(0.0)
+
+    Compositor.current?.requestAnimationFrame { time in
+        count.value = Float(time.attoseconds / 1_000_000_000_000_000)
+        // print(count.value)
+        if count.value > 4800 {
+            return .done
+        }
+        return .ongoing
+    }
+
+    return VStack(gap: 12) {
+        UIBox()
+            .background(.red)
+            .size([100, 100])
+            .offset([count.value / 4, 0])
+        UIBox()
+            .background(.green)
+            .size([100, 100])
+        UIBox()
+            .background(.blue)
+            .size([100, 100])
+            .cornerRadius(36)
+        UIBox()
+            .background(.white)
+            .size([100, 100])
+            .cornerRadius(36)
+            .shadow(color: .black.multiply(opacity: 0.3), blur: 24)
+        // .withLayer { layer in
+        //     layer.
+        // }
+
+    }
+}
+
 @main
 @MainActor
 struct Graphics101 {
@@ -52,29 +89,6 @@ struct Graphics101 {
             element: Counter()
         )
         runtime.start()
-
-        // print("\(compositor.rootLayer.children[0].bounds)")
-
-        // renderQueue.performBs()
-
-        // launchCounter()
-        // compositor.start()
-
-        // Task {
-        //     while !Task.isCancelled {
-        //         let nextFrameTime = ContinuousClock.now.advanced(by: .milliseconds(8))
-        //         await renderQueue.perform(offThread: true) { commandBuffer, swapChain in
-        //             compositor.runAnimation()
-        //             let info = compositor.flushDrawCommand()
-        //             renderer.apply(info: info, swapChain: swapChain, commandBuffer: commandBuffer)
-        //         }
-        //         display.dispatchPending()
-        //         try await Task.sleep(until: nextFrameTime)
-        //     }
-        // }
-
-        // let start = ContinuousClock.now
-        // ContiguousArray()
 
         RunLoop.main.run()
         drop(token)

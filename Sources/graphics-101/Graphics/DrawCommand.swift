@@ -14,7 +14,7 @@ enum DrawCommand {
     // clipping?a
 
     case blur(
-        vertex: [4 of Point<Float>], borderRadius: Float, rotation: Float, gammaA: Float,
+        vertex: [4 of SIMD2<Float>], borderRadius: Float, rotation: Float, gammaA: Float,
         gammaB: Float)
 }
 
