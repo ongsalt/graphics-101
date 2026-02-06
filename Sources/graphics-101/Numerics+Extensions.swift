@@ -1,3 +1,5 @@
+import RealModule
+
 extension Numeric {
     func squared() -> Self {
         return self * self
@@ -43,15 +45,15 @@ extension SIMD3 where Scalar: FloatingPoint {
 // https://en.wikipedia.org/wiki/Error_function#Bounds_and_numerical_approximations
 
 extension Double {
-    static let e = exp(1.0)
+    static let e: Double = exp(1.0)
 
     static func erf(_ x: Double) -> Double {
-        let x = x.clamp(0, 1)
+        let x: Double = x.clamp(0, 1)
 
-        let a1 = 0.278393
-        let a2 = 0.230389
-        let a3 = 0.000972
-        let a4 = 0.078108
+        let a1: Double = 0.278393
+        let a2: Double = 0.230389
+        let a3: Double = 0.000972
+        let a4: Double = 0.078108
 
         return 1 - 1
             / Double.pow(

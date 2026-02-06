@@ -3,6 +3,7 @@ import CoreFoundation
 import Foundation
 import Synchronization
 import Wayland
+import FreeType
 
 @MainActor
 func Counter() -> some UIElement {
@@ -55,6 +56,8 @@ struct Graphics101 {
 
         let window: RawWindow = RawWindow(display: display, title: "yomama")
         window.show()
+
+        FreeType.initialize()
 
         let token = RunLoop.main.addListener(on: [.beforeWaiting]) { _ in
             // print("Will sleep")

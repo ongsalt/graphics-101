@@ -23,16 +23,10 @@ use [naga](https://github.com/gfx-rs/wgpu/tree/trunk/naga) to compile wgsl to sp
 ok, it doesnt support push constant, use glslc instead
 
 ## TODO
-- Nuke cuurent signal impl
-    - stop using Observation framework becuase no untrack
-    - force everything to be main thread/actor only
-    - build our own observation macro for property tracking
-        - reflection for now
-- command buffer/pool/whatever per frame in flight
 - clip
-- concurrency safe signal
 - think about pixel perfect stuff
 - distance field of composited(?) shape
+- use Pango
 
 ## Note
 - query required gpu features (and optionally provide fallback)

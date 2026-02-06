@@ -17,6 +17,11 @@ let package = Package(
                 .interoperabilityMode(.C)
             ]
         ),
+        .systemLibrary(name: "CFreeType", pkgConfig: "freetype2"),
+        .target(
+            name: "FreeType",
+            dependencies: ["CFreeType"]
+        ),
 
         .target(
             name: "CVMA",
@@ -31,6 +36,7 @@ let package = Package(
                 .product(name: "Numerics", package: "swift-numerics"),
                 .target(name: "Wayland", condition: .when(platforms: [.linux])),
                 "CVMA",
+                "FreeType",
             ],
             resources: [
                 .copy("Resources/Compiled/")
