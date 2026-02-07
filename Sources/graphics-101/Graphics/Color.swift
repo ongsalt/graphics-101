@@ -39,14 +39,6 @@ struct Color {
         self.a = Float(rgba & 0xFF) / 255.0
     }
 
-    static let black = Color(r: 0, g: 0, b: 0, a: 1)
-    static let white = Color(r: 1, g: 1, b: 1, a: 1)
-    static let grey = Color(r: 0.5, g: 0.5, b: 0.5, a: 1)
-    static let red = Color(r: 1, g: 0, b: 0, a: 1)
-    static let green = Color(r: 0, g: 1, b: 0, a: 1)
-    static let blue = Color(r: 0, g: 0, b: 1, a: 1)
-    static let transparent = Color(r: 0, g: 0, b: 0, a: 0)
-
     func toUInt8() -> (r: UInt8, g: UInt8, b: UInt8, a: UInt8) {
         (
             r: UInt8(r.clamp(0, 1) * 255),
@@ -145,10 +137,9 @@ struct Color {
         Color(r: lhs.r + rhs.r, g: lhs.g + rhs.g, b: lhs.b + rhs.b, a: max(lhs.a, rhs.a))
     }
 
-}
-
-extension Color {
     static func random(alpha: Float) -> Color {
         Color(Float.random(in: 0...1), .random(in: 0...1), .random(in: 0...1), alpha)
     }
 }
+
+

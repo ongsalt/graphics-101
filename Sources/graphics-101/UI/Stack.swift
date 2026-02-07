@@ -94,7 +94,7 @@ class ZStack: UIElement {
             child.parentData!.needRemeasure = false
         }
 
-        return constraints.clamp([w, h])
+        return constraints.clamp([_width ?? w, _height ?? h])
     }
 
     override func place(area: Rect) {
@@ -137,7 +137,8 @@ class ZStack: UIElement {
             }
 
             let childArea = Rect(
-                topLeft: [area.left + offsetX, area.top + offsetY],
+                // topLeft: [area.left + offsetX, area.top + offsetY],
+                topLeft: [offsetX, offsetY],
                 size: [childWidth, childHeight]
             )
             child.place(area: childArea)

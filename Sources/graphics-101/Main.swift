@@ -1,9 +1,9 @@
 @preconcurrency import CVMA
 import CoreFoundation
 import Foundation
+import FreeType
 import Synchronization
 import Wayland
-import FreeType
 
 @MainActor
 func Counter() -> some UIElement {
@@ -34,12 +34,28 @@ func Counter() -> some UIElement {
             .background(.white)
             .size([100, 100])
             .cornerRadius(36)
-            .shadow(color: .black.multiply(opacity: 0.3), blur: 24)
+            .border(width: 1, color: .neutral200)
+            .shadow(color: .black.multiply(opacity: 0.22), blur: 28)
         // .withLayer { layer in
         //     layer.
         // }
 
     }
+}
+
+@MainActor
+func Window() -> some UIElement {
+    ZStack {
+        ZStack {
+            Counter()
+        }
+        .size([500, 500])
+        .background(.white)
+        .cornerRadius(48)
+        .border(width: 1, color: .neutral200)
+        .shadow(color: .black.multiply(opacity: 0.22), blur: 28)
+    }
+    .alignment(horizontal: .center, vertical: .center)
 }
 
 @main
@@ -89,7 +105,7 @@ struct Graphics101 {
 
         let runtime = UIRuntime(
             layer: compositor.rootLayer,
-            element: Counter()
+            element: Window()
         )
         runtime.start()
 

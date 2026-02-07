@@ -20,10 +20,6 @@ class UIElement: Identifiable {
     /// aka draw
     /// area is not layer size
     func place(area: Rect) {
-        if layer.parent == nil {
-            parentLayer!.addChild(layer)
-        }
-
         layer.position = area.topLeft + _offset
         layer.bounds.size = area.size
     }
@@ -61,7 +57,6 @@ class UIElement: Identifiable {
         child.place(area: child.parentData!.finalRect)
     }
 
-
     func addChild(_ view: View) {
         for e in view.build() {
             addChild(element: e)
@@ -84,6 +79,8 @@ class UIElement: Identifiable {
         element.parent = self
         element.parentData = ParentData()
         element.parentLayer = self.layer
+        self.layer.addChild(element.layer)
+        
         // TODO: trigger onmount
     }
 
@@ -103,7 +100,6 @@ class UIElement: Identifiable {
     }
 }
 
-
 extension UIElement: Equatable {
     nonisolated static func == (lhs: UIElement, rhs: UIElement) -> Bool {
         lhs.id == rhs.id
@@ -117,4 +113,3 @@ struct ParentData {
     var needRemeasure: Bool = true
     var needReplace: Bool = true
 }
-

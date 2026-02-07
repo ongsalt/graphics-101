@@ -23,6 +23,8 @@ use [naga](https://github.com/gfx-rs/wgpu/tree/trunk/naga) to compile wgsl to sp
 ok, it doesnt support push constant, use glslc instead
 
 ## TODO
+- padding, margin
+- clip to parent
 - clip
 - think about pixel perfect stuff
 - distance field of composited(?) shape
