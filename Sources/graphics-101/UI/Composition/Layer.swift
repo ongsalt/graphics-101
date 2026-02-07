@@ -13,6 +13,7 @@ class Layer: Identifiable {
     }
 
     var z: Float = 1
+    // inner size
     var bounds: Rect = .zero {  // mostly always at 0,0 TODO: make it not
         didSet {
             invalidate(.transformations)
@@ -20,6 +21,7 @@ class Layer: Identifiable {
     }
 
     // TODO: calculate this with transform
+    // outer size
     var frame: Rect {
         bounds.atOrigin.offset(position)
     }
@@ -43,13 +45,13 @@ class Layer: Identifiable {
     var clipChildren: Bool = true
     var cornerRadius: Float = 0 {
         didSet {
-            invalidate(.colors)
+            invalidate(.paint)
         }
     }
 
     var cornerDegree: Float = 4 {
         didSet {
-            invalidate(.colors)
+            invalidate(.paint)
         }
     }
 
@@ -58,25 +60,25 @@ class Layer: Identifiable {
 
     var shadowColor: Color = .transparent {
         didSet {
-            invalidate(.colors)
+            invalidate(.paint)
         }
     }
 
     var shadowBlur: Float = 0 {
         didSet {
-            invalidate(.colors)
+            invalidate(.paint)
         }
     }
 
     var shadowOffset: SIMD2<Float> = .zero {
         didSet {
-            invalidate(.colors)
+            invalidate(.paint)
         }
     }
 
     var backgroundColor: Color = .transparent {
         didSet {
-            invalidate(.colors)
+            invalidate(.paint)
         }
     }
 
@@ -96,8 +98,12 @@ class Layer: Identifiable {
     // var shadow: Shadow
     // lightingggggg
 
-    var filters: [Any] = []
-    var backdropFilters: [Any] = []
+    // TODO: contents positioning
+    var contents: (any LayerContents)?
+    // var contentsRect: Rect = .unit
+
+    // var filters: [Any] = []
+    // var backdropFilters: [Any] = []
 
     // var shouldRasterize: Bool = false
 

@@ -38,6 +38,7 @@ class UIRenderer {
 
         // info.damagedArea
         setViewport(swapChain: swapChain, commandBuffer: commandBuffer)
+        // TODO: bind global
 
         for cmd in info.commands {
             switch cmd {

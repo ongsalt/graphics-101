@@ -17,11 +17,14 @@ let package = Package(
                 .interoperabilityMode(.C)
             ]
         ),
+
         .systemLibrary(name: "CFreeType", pkgConfig: "freetype2"),
         .target(
             name: "FreeType",
             dependencies: ["CFreeType"]
         ),
+        
+        .systemLibrary(name: "CPango", pkgConfig: "pangoft2"),
 
         .target(
             name: "CVMA",
@@ -37,6 +40,7 @@ let package = Package(
                 .target(name: "Wayland", condition: .when(platforms: [.linux])),
                 "CVMA",
                 "FreeType",
+                "CPango",
             ],
             resources: [
                 .copy("Resources/Compiled/")

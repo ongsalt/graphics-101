@@ -1,6 +1,6 @@
 enum Invalidation {
     case transformations
-    case colors
+    case paint
     case backdropFilters
     case existence
 }

@@ -2,7 +2,8 @@
 import Foundation
 import Wayland
 
-// TODO: stroke
+// TODO: refactor this to be like an enum or smth
+// windows.ui.composition brush api is very nice, might rewrite 
 struct RoundedRectangleDrawCommand {
     let color: [4 of Color]
 
@@ -22,12 +23,6 @@ struct RoundedRectangleDrawCommand {
     let transform: AffineMatrix
 
     let mode: Float
-
-    // isShadow
-
-    // brush
-    // shadowRadius
-    //
 
     static let indexCount: UInt32 = 4
 

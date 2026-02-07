@@ -3,6 +3,7 @@
 #extension GL_EXT_buffer_reference : require
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
 
+layout(set = 0, binding = 10) uniform sampler2D globalTextures[];
 
 layout(location = 0) in vec4 inColor;
 layout(location = 1) in vec4 inSizing; // (cx,cy,w,h)
@@ -10,6 +11,7 @@ layout(location = 2) in vec4 borderRadiusAndRotation;
 layout(location = 3) in vec4 borderWidthAndDegree;
 
 layout(location = 4) in vec4 inBorderColor;
+layout(location = 5) in uint inTextureIndex;
 layout(location = 6) in vec4 inShadowParams; // (offsetX, offsetY, blur, mode)
 layout(location = 7) in vec2 inScreenSize;
 
@@ -57,6 +59,14 @@ void main() {
 
     float mode = inShadowParams.w;
 
+    // 0 = normal
+    // 1 = shadow
+    // 2 = texture
+    if (mode > 1.5) {
+
+    }
+
+    // mode 1
     if (mode > 0.5) {
         float shadowAlpha = 0.0;
         if (inColor.a > 0.0 && inShadowParams.z > 0.0) {
@@ -70,6 +80,7 @@ void main() {
         return;
     }
 
+    // mode 0
     vec4 shape = vec4(0.0);
     if (d <= 0.0) {
         if (borderWidth > 0.0 && d > -borderWidth) {

@@ -1,5 +1,7 @@
 struct Rect {
     static let zero = Rect(top: 0, left: 0, width: 0, height: 0)
+    static let one = Rect(top: 1, left: 1, width: 1, height: 1)
+    static let unit = one
 
     var top: Float
     var left: Float

@@ -2,6 +2,11 @@
 swift run -c release && ffmpeg -i ./ppm/%d.ppm ./out/%04d.png -y
 ```
 
+# Note
+- update pipeline to include new descriptor set layout
+- create texture registry
+- bind it (when render)
+
 # Dependencies not included
 - wayland devel stuff
 - freetype

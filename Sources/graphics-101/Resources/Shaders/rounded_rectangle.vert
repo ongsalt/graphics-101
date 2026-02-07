@@ -19,6 +19,7 @@ layout(location = 2) in vec4 borderRadiusAndRotation;
 layout(location = 3) in vec4 borderWidthAndDegree;
 
 layout(location = 4) in vec4 inBorderColor;
+layout(location = 5) in uint inTextureIndex;
 layout(location = 6) in vec4 inShadowParams; // (offsetX, offsetY, blur, mode)
 layout(location = 7) in vec2 inVertexPosition;
 
@@ -27,28 +28,21 @@ layout(location = 10) in vec4 inTransformC2;
 layout(location = 11) in vec4 inTransformC3;
 layout(location = 12) in vec4 inTransformC4;
 
-// layout(location = 9) in vec4 c1;
-// layout(location = 10) in vec4 c2;
-// layout(location = 11) in vec4 c3;
-// layout(location = 12) in vec4 c4;
-
 
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outSizing; // (cx,cy,w,h)
 layout(location = 2) out vec4 outBorderRadiusAndRotation;
 layout(location = 3) out vec4 outBorderWidthAndDegree;
+
 layout(location = 4) out vec4 outBorderColor;
+layout(location = 5) out uint outTextureIndex;
 layout(location = 6) out vec4 outShadowParams;
 layout(location = 7) out vec2 outScreenSize;
+
 layout(location = 9) out vec4 outTransformC1;
 layout(location = 10) out vec4 outTransformC2;
 layout(location = 11) out vec4 outTransformC3;
 layout(location = 12) out vec4 outTransformC4;
-
-// layout(location = 9) out vec4 outc1;
-// layout(location = 10) out vec4 outc2;
-// layout(location = 11) out vec4 outc3;
-// layout(location = 12) out vec4 outc4;
 
 
 
@@ -63,14 +57,11 @@ void main() {
     outTransformC2 = inTransformC2;
     outTransformC3 = inTransformC3;
     outTransformC4 = inTransformC4;
+    outTextureIndex = inTextureIndex;
     
     vec2 scaled_pos = (inVertexPosition / vec2(pc.ubo.w, pc.ubo.h)) * 2.0 - 1.0;
 
     gl_Position = vec4(scaled_pos, 0.0, 1.0);
     outColor = inColor;
 
-    // outc1 = c1;
-    // outc2 = c2;
-    // outc3 = c3;
-    // outc4 = c4;
 }
